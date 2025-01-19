@@ -77,7 +77,7 @@ function Start-UserTasksOrchestrator {
         $InputObject = [PSCustomObject]@{
             OrchestratorName = 'UserTaskOrchestrator'
             Batch            = @($Batch)
-            SkipLog          = $true
+            SkipLog          = $false
         }
         #Write-Host ($InputObject | ConvertTo-Json -Depth 10)
 
