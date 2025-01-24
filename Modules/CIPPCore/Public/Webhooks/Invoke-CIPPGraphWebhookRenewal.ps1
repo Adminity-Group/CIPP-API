@@ -9,7 +9,7 @@ function Invoke-CippGraphWebhookRenewal {
     $WebhookData = Get-AzDataTableEntity @WebhookTable -Filter "Expiration ne 'Does Not Expire'" | Where-Object { $null -ne $_.SubscriptionID -and $_.SubscriptionID -ne '' -and ((Get-Date($_.Expiration)) -le ((Get-Date).AddHours(2))) }
 
     if (!$WebhookData){
-        Write-LogMessage -user 'CIPP' -API 'Renew_Graph_Subscriptions' -message "No graph subscriptions to renew" -Sev "Info" -tenant 'none'
+        Write-LogMessage -user 'CIPP' -API 'Renew_Graph_Subscriptions' -message "No graph subscriptions to renew" -Sev "Debug" -tenant 'none'
         return
     }
 
