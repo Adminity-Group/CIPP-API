@@ -24,7 +24,7 @@ function Get-CIPPAlertAppSecretExpiry {
             foreach ($Credential in $App.passwordCredentials) {
                 if ($Credential.endDateTime -lt (Get-Date).AddDays(30) -and $Credential.endDateTime -gt (Get-Date).AddDays(-7)) {
                     Write-Host ("Application '{0}' has secrets expiring on {1}" -f $App.displayName, $Credential.endDateTime)
-                    @{ DisplayName = $App.displayName; Expires = $Credential.endDateTime }
+                    "App: $($App.displayName) - Secret Expires: $($Credential.endDateTime)"
                 }
             }
         }
