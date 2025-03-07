@@ -17,6 +17,7 @@ jobs:
     runs-on: windows-latest
     permissions:
       id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
       - name: 'Checkout GitHub Action'
@@ -25,9 +26,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_848B6DBA0F91487E94CDD58E8A7A24F6 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_F22D03965F0B4886B63945674447AEEB }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_766B47C688D34E5897DA4187A37DEABA }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_A4EA482057CF43D488B1E02C85C7F836 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_AF840FA37DF643CAAD75F928B2EBCDD5 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_36C9C9A4C50B4709AB90DAEBB12B3272 }}
 
       - name: 'Run Azure Functions Action'
         uses: Azure/functions-action@v1
