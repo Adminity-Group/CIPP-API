@@ -1,4 +1,4 @@
-function Invoke-CIPPStandardQuarantinePolicy {
+function Invoke-CIPPStandardQuarantineTemplate {
     <#
     .FUNCTIONALITY
         Internal
