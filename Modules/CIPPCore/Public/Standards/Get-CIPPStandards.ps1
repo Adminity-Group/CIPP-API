@@ -165,7 +165,7 @@ function Get-CIPPStandards {
                     $IsArray = $Value -is [System.Collections.IEnumerable] -and -not ($Value -is [string])
 
                     if ($IsArray) {
-                        write-host "Get-CIPPStandards: is array $($Value | ConvertTo-Json)"
+                        write-host "Get-CIPPStandards: 4a: is array $($Value | ConvertTo-Json)"
                         foreach ($Item in $Value) {
                             $CurrentStandard = $Item.PSObject.Copy()
                             $CurrentStandard | Add-Member -NotePropertyName 'TemplateId' -NotePropertyValue $Template.GUID -Force
@@ -181,7 +181,7 @@ function Get-CIPPStandards {
                             }
                         }
                     } else {
-                        write-host "Get-CIPPStandards: is not array $($Value | ConvertTo-Json)"
+                        write-host "Get-CIPPStandards: 4a: is not array $($Value | ConvertTo-Json)"
                         $CurrentStandard = $Value.PSObject.Copy()
                         $CurrentStandard | Add-Member -NotePropertyName 'TemplateId' -NotePropertyValue $Template.GUID -Force
 
@@ -207,6 +207,7 @@ function Get-CIPPStandards {
                     $IsArray = $Value -is [System.Collections.IEnumerable] -and -not ($Value -is [string])
 
                     if ($IsArray) {
+                        write-host "Get-CIPPStandards: 4b: is array $($Value | ConvertTo-Json)"
                         foreach ($Item in $Value) {
                             $CurrentStandard = $Item.PSObject.Copy()
                             $CurrentStandard | Add-Member -NotePropertyName 'TemplateId' -NotePropertyValue $Template.GUID -Force
@@ -223,6 +224,7 @@ function Get-CIPPStandards {
                             }
                         }
                     } else {
+                        write-host "Get-CIPPStandards: 4b: is not array $($Value | ConvertTo-Json)"
                         $CurrentStandard = $Value.PSObject.Copy()
                         $CurrentStandard | Add-Member -NotePropertyName 'TemplateId' -NotePropertyValue $Template.GUID -Force
 
@@ -244,10 +246,12 @@ function Get-CIPPStandards {
                 $TempCopy = $ComputedStandards[$Standard].PSObject.Copy()
                 # Remove local 'TemplateId' from final object(s)
                 if ($TempCopy -is [System.Collections.IEnumerable] -and -not ($TempCopy -is [string])) {
+                    write-host "Get-CIPPStandards: 4c: is array $($Value | ConvertTo-Json)"
                     foreach ($subItem in $TempCopy) {
                         $subItem.PSObject.Properties.Remove('TemplateId') | Out-Null
                     }
                 } else {
+                    write-host "Get-CIPPStandards: 4c: is not array $($Value | ConvertTo-Json)"
                     $TempCopy.PSObject.Properties.Remove('TemplateId') | Out-Null
                 }
 
