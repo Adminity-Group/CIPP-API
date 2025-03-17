@@ -54,7 +54,7 @@ function Invoke-CIPPStandardQuarantinePolicy {
             PermissionToViewHeader = $true
             PermissionToAllowSender = $Settings.PermissionToAllowSender
         }
-        Write-Host "Invoke-CIPPStandardQuarantinePolicy: $($EndUserQuarantinePermissions | ConvertTo-Json -Depth 5 -Compress)"
+        Write-Host "Invoke-CIPPStandardQuarantinePolicy: EndUserQuarantinePermissions $($EndUserQuarantinePermissions | ConvertTo-Json -Depth 5 -Compress)"
 
         if ($null -eq $ExistingPolicy.Name) {
             $PolicyName = $PolicyList[0]
@@ -76,10 +76,15 @@ function Invoke-CIPPStandardQuarantinePolicy {
 
             $CurrentState = $ExistingPolicy | Select-Object Name, ESNEnabled, EndUserQuarantinePermissions, IncludeMessagesFromBlockedSenderAddress, QuarantinePolicyType
             $CurrentStateEndUserQuarantinePermissions = Convert-StringToHashtable -InputString $CurrentState.EndUserQuarantinePermissions
+            Write-Host "Invoke-CIPPStandardQuarantinePolicy: CurrentState $($CurrentState | ConvertTo-Json -Depth 5 -Compress)"
+            Write-Host "Invoke-CIPPStandardQuarantinePolicy: CurrentStateEndUserQuarantinePermissions $($CurrentStateEndUserQuarantinePermissions | ConvertTo-Json -Depth 5 -Compress)"
+
             $StateIsCorrect = ($CurrentState.Name -eq $PolicyName) -and
                             ($CurrentState.ESNEnabled -eq $Settings.ESNEnabled) -and
                             ($CurrentState.IncludeMessagesFromBlockedSenderAddress -eq $Settings.IncludeMessagesFromBlockedSenderAddress) -and
                             ($CurrentStateEndUserQuarantinePermissions -eq $EndUserQuarantinePermissions)
+
+
             if ($StateIsCorrect -eq $true) {
                 Write-LogMessage -API 'Standards' -tenant $Tenant -message "Custom Quarantine Policy already correctly configured $PolicyName" -sev Info
             }
