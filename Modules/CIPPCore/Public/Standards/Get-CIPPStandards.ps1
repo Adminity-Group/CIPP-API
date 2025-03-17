@@ -165,6 +165,7 @@ function Get-CIPPStandards {
                     $IsArray = $Value -is [System.Collections.IEnumerable] -and -not ($Value -is [string])
 
                     if ($IsArray) {
+                        write-host "Get-CIPPStandards: is array $($Value | ConvertTo-Json)"
                         foreach ($Item in $Value) {
                             $CurrentStandard = $Item.PSObject.Copy()
                             $CurrentStandard | Add-Member -NotePropertyName 'TemplateId' -NotePropertyValue $Template.GUID -Force
@@ -180,6 +181,7 @@ function Get-CIPPStandards {
                             }
                         }
                     } else {
+                        write-host "Get-CIPPStandards: is not array $($Value | ConvertTo-Json)"
                         $CurrentStandard = $Value.PSObject.Copy()
                         $CurrentStandard | Add-Member -NotePropertyName 'TemplateId' -NotePropertyValue $Template.GUID -Force
 
