@@ -216,8 +216,10 @@ function Get-CIPPStandards {
                             $Actions = $CurrentStandard.action.value | Where-Object { $_ -in 'Remediate', 'warn', 'Report' }
                             if ($Actions -contains 'Remediate' -or $Actions -contains 'warn' -or $Actions -contains 'Report') {
                                 if (-not $ComputedStandards.Contains($StandardName)) {
+                                    write-host "Get-CIPPStandards: 4b:if $StandardName"
                                     $ComputedStandards[$StandardName] = $CurrentStandard
                                 } else {
+                                    write-host "Get-CIPPStandards: 4b:else $StandardName"
                                     $MergedStandard = Merge-CippStandards -Existing $ComputedStandards[$StandardName] -New $CurrentStandard -StandardName $StandardName
                                     $ComputedStandards[$StandardName] = $MergedStandard
                                 }
