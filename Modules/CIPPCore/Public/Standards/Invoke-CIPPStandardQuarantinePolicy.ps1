@@ -36,69 +36,70 @@ function Invoke-CIPPStandardQuarantinePolicy {
 
     param($Tenant, $Settings)
     try {
-        $PolicyList = @($Settings.Name,'Custom Quarantine Policy')
-        $ExistingPolicy = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-QuarantinePolicy' | Where-Object -Property Name -In $PolicyList
-        $cmdparams = @{
-            ESNEnabled                          = $Settings.ESNEnabled
-            IncludeMessagesFromBlockedSenderAddress = $Settings.IncludeMessagesFromBlockedSenderAddress
-        }
-
-        $EndUserQuarantinePermissions = @{
-            PermissionToBlockSender = $Settings.PermissionToBlockSender
-            PermissionToDelete = $Settings.PermissionToDelete
-            PermissionToDownload = $false
-            PermissionToPreview = $Settings.PermissionToPreview
-            PermissionToRelease = if ($Settings.ReleaseAction -eq "PermissionToRelease") { $true } else { $false }
-            PermissionToRequestRelease = if ($Settings.ReleaseAction -eq "PermissionToRequestRelease") { $true } else { $false }
-            PermissionToViewHeader = $true
-            PermissionToAllowSender = $Settings.PermissionToAllowSender
-        }
-
-        if ($null -eq $ExistingPolicy.Name) {
-            $PolicyName = $PolicyList[0]
-            $EndUserQuarantinePermissionsValue = Convert-HashtableToEndUserQuarantinePermissionsValue -InputHashtable $EndUserQuarantinePermissions
-
-            $cmdparams.Add('Name', $PolicyName)
-            $cmdparams.Add('EndUserQuarantinePermissionsValue', $EndUserQuarantinePermissionsValue)
-            try {
-                New-ExoRequest -tenantid $Tenant -cmdlet 'New-QuarantinePolicy' -cmdParams $cmdparams -UseSystemMailbox $true
-                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Created Custom Quarantine Policy $PolicyName" -sev Info
-            }
-            catch {
-                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to create Custom Quarantine Policy $PolicyName" -sev Error -LogData $_
+        foreach ($Policy in $Settings) {
+            $PolicyList = @($Policy.Name,'Custom Quarantine Policy')
+            $ExistingPolicy = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-QuarantinePolicy' | Where-Object -Property Name -In $PolicyList
+            $cmdparams = @{
+                ESNEnabled                          = $Policy.ESNEnabled
+                IncludeMessagesFromBlockedSenderAddress = $Policy.IncludeMessagesFromBlockedSenderAddress
             }
 
-        } else {
-            $PolicyName = $ExistingPolicy.Name
-            $cmdparams.Add('Identity', $PolicyName)
-
-            $CurrentState = $ExistingPolicy | Select-Object Name, ESNEnabled, EndUserQuarantinePermissions, IncludeMessagesFromBlockedSenderAddress, QuarantinePolicyType
-            $CurrentStateEndUserQuarantinePermissions = Convert-StringToHashtable -InputString $CurrentState.EndUserQuarantinePermissions
-
-            $StateIsCorrect = ($CurrentState.Name -eq $PolicyName) -and
-                            ($CurrentState.ESNEnabled -eq $Settings.ESNEnabled) -and
-                            ($CurrentState.IncludeMessagesFromBlockedSenderAddress -eq $Settings.IncludeMessagesFromBlockedSenderAddress) -and
-                            (!(Compare-Object @($CurrentStateEndUserQuarantinePermissions.values) @($EndUserQuarantinePermissions.values)))
-
-
-            if ($StateIsCorrect -eq $true) {
-                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Custom Quarantine Policy already correctly configured $PolicyName" -sev Info
+            $EndUserQuarantinePermissions = @{
+                PermissionToBlockSender = $Policy.PermissionToBlockSender
+                PermissionToDelete = $Policy.PermissionToDelete
+                PermissionToDownload = $false
+                PermissionToPreview = $Policy.PermissionToPreview
+                PermissionToRelease = if ($Policy.ReleaseAction -eq "PermissionToRelease") { $true } else { $false }
+                PermissionToRequestRelease = if ($Policy.ReleaseAction -eq "PermissionToRequestRelease") { $true } else { $false }
+                PermissionToViewHeader = $true
+                PermissionToAllowSender = $Policy.PermissionToAllowSender
             }
-            else{
+
+            if ($null -eq $ExistingPolicy.Name) {
+                $PolicyName = $PolicyList[0]
+                $EndUserQuarantinePermissionsValue = Convert-HashtableToEndUserQuarantinePermissionsValue -InputHashtable $EndUserQuarantinePermissions
+
+                $cmdparams.Add('Name', $PolicyName)
+                $cmdparams.Add('EndUserQuarantinePermissionsValue', $EndUserQuarantinePermissionsValue)
                 try {
-                    $EndUserQuarantinePermissionsValue = Convert-HashtableToEndUserQuarantinePermissionsValue -InputHashtable $EndUserQuarantinePermissions
-                    $cmdparams.Add('EndUserQuarantinePermissionsValue', $EndUserQuarantinePermissionsValue)
-                    New-ExoRequest -tenantid $Tenant -cmdlet 'Set-QuarantinePolicy' -cmdParams $cmdparams -UseSystemMailbox $true
-                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Updated Custom Quarantine Policy $PolicyName" -sev Info
+                    New-ExoRequest -tenantid $Tenant -cmdlet 'New-QuarantinePolicy' -cmdParams $cmdparams -UseSystemMailbox $true
+                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Created Custom Quarantine Policy $PolicyName" -sev Info
                 }
                 catch {
-                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to update Custom Quarantine Policy $PolicyName" -sev Error -LogData $_
+                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to create Custom Quarantine Policy $PolicyName" -sev Error -LogData $_
+                }
+
+            } else {
+                $PolicyName = $ExistingPolicy.Name
+                $cmdparams.Add('Identity', $PolicyName)
+
+                $CurrentState = $ExistingPolicy | Select-Object Name, ESNEnabled, EndUserQuarantinePermissions, IncludeMessagesFromBlockedSenderAddress, QuarantinePolicyType
+                $CurrentStateEndUserQuarantinePermissions = Convert-StringToHashtable -InputString $CurrentState.EndUserQuarantinePermissions
+
+                $StateIsCorrect = ($CurrentState.Name -eq $PolicyName) -and
+                                ($CurrentState.ESNEnabled -eq $Policy.ESNEnabled) -and
+                                ($CurrentState.IncludeMessagesFromBlockedSenderAddress -eq $Policy.IncludeMessagesFromBlockedSenderAddress) -and
+                                (!(Compare-Object @($CurrentStateEndUserQuarantinePermissions.values) @($EndUserQuarantinePermissions.values)))
+
+
+                if ($StateIsCorrect -eq $true) {
+                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Custom Quarantine Policy already correctly configured $PolicyName" -sev Info
+                }
+                else{
+                    try {
+                        $EndUserQuarantinePermissionsValue = Convert-HashtableToEndUserQuarantinePermissionsValue -InputHashtable $EndUserQuarantinePermissions
+                        $cmdparams.Add('EndUserQuarantinePermissionsValue', $EndUserQuarantinePermissionsValue)
+                        New-ExoRequest -tenantid $Tenant -cmdlet 'Set-QuarantinePolicy' -cmdParams $cmdparams -UseSystemMailbox $true
+                        Write-LogMessage -API 'Standards' -tenant $Tenant -message "Updated Custom Quarantine Policy $PolicyName" -sev Info
+                    }
+                    catch {
+                        Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to update Custom Quarantine Policy $PolicyName" -sev Error -LogData $_
+                    }
                 }
             }
-
         }
     }
     catch {
-        write-LogMessage -API 'Standards' -tenant $Tenant -message "Invoke-CIPPStandardQuarantinePolicy: Failed to create Custom Quarantine Policy $PolicyName" -sev Error -LogData $_
+        write-LogMessage -API 'Standards' -tenant $Tenant -message "Invoke-CIPPStandardQuarantinePolicy: Failed to create Custom Quarantine Policy" -sev Error -LogData $_
     }
 }
