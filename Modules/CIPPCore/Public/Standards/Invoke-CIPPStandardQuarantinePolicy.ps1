@@ -82,7 +82,7 @@ function Invoke-CIPPStandardQuarantinePolicy {
             $StateIsCorrect = ($CurrentState.Name -eq $PolicyName) -and
                             ($CurrentState.ESNEnabled -eq $Settings.ESNEnabled) -and
                             ($CurrentState.IncludeMessagesFromBlockedSenderAddress -eq $Settings.IncludeMessagesFromBlockedSenderAddress) -and
-                            ($CurrentStateEndUserQuarantinePermissions -eq $EndUserQuarantinePermissions)
+                            (!(Compare-Object @($CurrentStateEndUserQuarantinePermissions.values) @($EndUserQuarantinePermissions.values)))
 
 
             if ($StateIsCorrect -eq $true) {
@@ -106,4 +106,3 @@ function Invoke-CIPPStandardQuarantinePolicy {
         write-LogMessage -API 'Standards' -tenant $Tenant -message "Invoke-CIPPStandardQuarantinePolicy: Failed to create Custom Quarantine Policy $PolicyName" -sev Error -LogData $_
     }
 }
-
