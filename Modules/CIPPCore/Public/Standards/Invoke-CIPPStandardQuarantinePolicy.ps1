@@ -36,38 +36,6 @@ function Invoke-CIPPStandardQuarantinePolicy {
 
     param($Tenant, $Settings)
 
-    function Convert-StringToHashtable {
-        param (
-            [string]$InputString
-        )
-
-        # Remove square brackets and split into lines
-        $InputString = $InputString.Trim('[', ']')
-        $hashtable = @{}
-        $InputString -split "`n" | ForEach-Object {
-            $key, $value = $_ -split ":\s*"
-            $hashtable[$key.Trim()] = [System.Convert]::ToBoolean($value.Trim())
-        }
-        return $hashtable
-    }
-
-    function Convert-HashtableToEndUserQuarantinePermissionsValue {
-        param (
-            [hashtable]$InputHashtable
-        )
-
-        $EndUserQuarantinePermissionsValue = 0
-        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToViewHeader * 128
-        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToDownload * 64
-        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToAllowSender * 32
-        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToBlockSender * 16
-        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToRequestRelease * 8
-        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToRelease * 4
-        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToPreview * 2
-        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToDelete * 1
-        return $EndUserQuarantinePermissionsValue
-    }
-
     $PolicyList = @($Settings.Name,'Custom Quarantine Policy')
     $ExistingPolicy = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-QuarantinePolicy' | Where-Object -Property Name -In $PolicyList
     $cmdparams = @{
