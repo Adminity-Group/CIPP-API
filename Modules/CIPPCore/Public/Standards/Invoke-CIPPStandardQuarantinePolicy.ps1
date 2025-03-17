@@ -40,9 +40,9 @@ function Invoke-CIPPStandardQuarantinePolicy {
     $ExistingPolicy = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-QuarantinePolicy' | Where-Object -Property Name -In $PolicyList
     $cmdparams = @{
         ESNEnabled                          = $Settings.ESNEnabled
-        EndUserQuarantinePermissionsValue   = $Settings.EndUserQuarantinePermissionsValue
         IncludeMessagesFromBlockedSenderAddress = $Settings.IncludeMessagesFromBlockedSenderAddress
     }
+    Write-Host "Invoke-CIPPStandardQuarantinePolicy: $($Settings | ConvertTo-Json -Depth 5 -Compress)"
 
     $EndUserQuarantinePermissions = @{
         PermissionToBlockSender = $Settings.PermissionToBlockSender
@@ -54,6 +54,7 @@ function Invoke-CIPPStandardQuarantinePolicy {
         PermissionToViewHeader = $true
         PermissionToAllowSender = $Settings.PermissionToAllowSender
     }
+    Write-Host "Invoke-CIPPStandardQuarantinePolicy: $($EndUserQuarantinePermissions | ConvertTo-Json -Depth 5 -Compress)"
 
     if ($null -eq $ExistingPolicy.Name) {
         $PolicyName = $PolicyList[0]
