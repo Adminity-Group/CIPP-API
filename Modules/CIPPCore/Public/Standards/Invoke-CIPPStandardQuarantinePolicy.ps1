@@ -36,6 +36,38 @@ function Invoke-CIPPStandardQuarantinePolicy {
 
     param($Tenant, $Settings)
 
+    function Convert-StringToHashtable {
+        param (
+            [string]$InputString
+        )
+
+        # Remove square brackets and split into lines
+        $InputString = $InputString.Trim('[', ']')
+        $hashtable = @{}
+        $InputString -split "`n" | ForEach-Object {
+            $key, $value = $_ -split ":\s*"
+            $hashtable[$key.Trim()] = [System.Convert]::ToBoolean($value.Trim())
+        }
+        return $hashtable
+    }
+
+    function Convert-HashtableToEndUserQuarantinePermissionsValue {
+        param (
+            [hashtable]$InputHashtable
+        )
+
+        $EndUserQuarantinePermissionsValue = 0
+        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToViewHeader * 128
+        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToDownload * 64
+        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToAllowSender * 32
+        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToBlockSender * 16
+        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToRequestRelease * 8
+        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToRelease * 4
+        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToPreview * 2
+        $EndUserQuarantinePermissionsValue += [int]$InputHashtable.PermissionToDelete * 1
+        return $EndUserQuarantinePermissionsValue
+    }
+
     $PolicyList = @($Settings.Name,'Custom Quarantine Policy')
     $ExistingPolicy = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-QuarantinePolicy' | Where-Object -Property Name -In $PolicyList
     $cmdparams = @{
@@ -44,13 +76,26 @@ function Invoke-CIPPStandardQuarantinePolicy {
         IncludeMessagesFromBlockedSenderAddress = $Settings.IncludeMessagesFromBlockedSenderAddress
     }
 
+    $EndUserQuarantinePermissions = @{
+        PermissionToBlockSender = $Settings.PermissionToBlockSender
+        PermissionToDelete = $Settings.PermissionToDelete
+        PermissionToDownload = $false
+        PermissionToPreview = $Settings.PermissionToPreview
+        PermissionToRelease = if ($Settings.ReleaseAction -eq "PermissionToRelease") { $true } else { $false }
+        PermissionToRequestRelease = if ($Settings.ReleaseAction -eq "PermissionToRequestRelease") { $true } else { $false }
+        PermissionToViewHeader = $true
+        PermissionToAllowSender = $Settings.PermissionToAllowSender
+    }
 
     if ($null -eq $ExistingPolicy.Name) {
         $PolicyName = $PolicyList[0]
+        $EndUserQuarantinePermissionsValue = Convert-HashtableToEndUserQuarantinePermissionsValue -InputHashtable $EndUserQuarantinePermissions
+
         $cmdparams.Add('Name', $PolicyName)
+        $cmdparams.Add('EndUserQuarantinePermissionsValue', $EndUserQuarantinePermissionsValue)
         try {
             New-ExoRequest -tenantid $Tenant -cmdlet 'New-QuarantinePolicy' -cmdParams $cmdparams -UseSystemMailbox $true
-            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Created Custom Quarantine Policy $PolicyName." -sev Info
+            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Created Custom Quarantine Policy $PolicyName" -sev Info
         }
         catch {
             Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to create Custom Quarantine Policy $PolicyName" -sev Error -LogData $_
@@ -60,17 +105,21 @@ function Invoke-CIPPStandardQuarantinePolicy {
         $PolicyName = $ExistingPolicy.Name
         $cmdparams.Add('Identity', $PolicyName)
 
-        $CurrentState = $ExistingPolicy | Select-Object Name, ESNEnabled, EndUserQuarantinePermissions, QuarantineRetentionDays, IncludeMessagesFromBlockedSenderAddress, QuarantinePolicyType
+        $CurrentState = $ExistingPolicy | Select-Object Name, ESNEnabled, EndUserQuarantinePermissions, IncludeMessagesFromBlockedSenderAddress, QuarantinePolicyType
+        $CurrentStateEndUserQuarantinePermissions = Convert-StringToHashtable -InputString $CurrentState.EndUserQuarantinePermissions
         $StateIsCorrect = ($CurrentState.Name -eq $PolicyName) -and
                         ($CurrentState.ESNEnabled -eq $Settings.ESNEnabled) -and
-                        ($CurrentState.IncludeMessagesFromBlockedSenderAddress -eq $Settings.IncludeMessagesFromBlockedSenderAddress)
+                        ($CurrentState.IncludeMessagesFromBlockedSenderAddress -eq $Settings.IncludeMessagesFromBlockedSenderAddress) -and
+                        ($CurrentState.$CurrentStateEndUserQuarantinePermissions -eq $EndUserQuarantinePermissions)
         if ($StateIsCorrect -eq $true) {
             Write-LogMessage -API 'Standards' -tenant $Tenant -message "Custom Quarantine Policy already correctly configured $PolicyName" -sev Info
         }
         else{
             try {
+                $EndUserQuarantinePermissionsValue = Convert-HashtableToEndUserQuarantinePermissionsValue -InputHashtable $EndUserQuarantinePermissions
+                $cmdparams.Add('EndUserQuarantinePermissionsValue', $EndUserQuarantinePermissionsValue)
                 New-ExoRequest -tenantid $Tenant -cmdlet 'Set-QuarantinePolicy' -cmdParams $cmdparams -UseSystemMailbox $true
-                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Updated Custom Quarantine Policy $PolicyName." -sev Info
+                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Updated Custom Quarantine Policy $PolicyName" -sev Info
             }
             catch {
                 Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to update Custom Quarantine Policy $PolicyName" -sev Error -LogData $_
@@ -80,3 +129,4 @@ function Invoke-CIPPStandardQuarantinePolicy {
     }
 
 }
+
