@@ -36,8 +36,6 @@ function Invoke-CIPPStandardQuarantineTemplate {
 
     param($Tenant, $Settings)
     try {
-        Write-Host "QuarantinePolicy: $($Settings.count)"
-        Write-Host "QuarantinePolicy: $($Settings | ConvertTo-Json)"
         foreach ($Policy in $Settings) {
             $PolicyList = @($Policy.Name,'Custom Quarantine Policy')
             $ExistingPolicy = New-ExoRequest -tenantid $Tenant -cmdlet 'Get-QuarantinePolicy' | Where-Object -Property Name -In $PolicyList
