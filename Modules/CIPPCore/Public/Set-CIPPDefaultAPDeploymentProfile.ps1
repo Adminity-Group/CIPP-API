@@ -22,6 +22,15 @@ function Set-CIPPDefaultAPDeploymentProfile {
     $User = $Request.Headers
 
     try {
+        If ($DeviceNameTemplate -contains "#SHORTNAME#") {
+            $Tenant = Get-Tenants -TenantFilter $tenantFilter
+            if (!$Tenant.ShortName) {
+                Write-LogMessage -Headers $User -API $APIName -tenant $($tenantfilter) -message "Failed $($Type)ing Autopilot Profile $($Displayname). Error: Tenant ShortName is not set for $($Tenant.defaultDomainName)" -Sev 'Error'
+                throw "Tenant ShortName is not set for $($tenantFilter)"
+                return
+            }
+            $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $ShortName #$Tenant.ShortName
+        }
         $ObjBody = [pscustomobject]@{
             '@odata.type'                            = '#microsoft.graph.azureADWindowsAutopilotDeploymentProfile'
             'displayName'                            = "$($displayname)"
