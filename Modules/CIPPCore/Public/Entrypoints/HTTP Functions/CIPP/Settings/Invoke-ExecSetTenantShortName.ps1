@@ -54,5 +54,3 @@ Function Invoke-ExecSetTenantShortName {
         })
     }
 }
-$Tenant = [pscustomobject]@{}
-$Tenant.psobject.Members | Where-Object { $_.Name -eq 'shortName' }
