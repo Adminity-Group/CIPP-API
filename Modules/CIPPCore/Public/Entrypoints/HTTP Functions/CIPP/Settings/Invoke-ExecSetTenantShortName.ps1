@@ -26,7 +26,13 @@ Function Invoke-ExecSetTenantShortName {
     try {
         $TenantsTable = Get-CippTable -tablename Tenants
         $Tenant = Get-Tenants -TenantFilter $Request.body.value
-        $Tenant | Add-Member -MemberType NoteProperty -Name shortName -Value $Request.body.ShortName
+
+        if ($Tenant.psobject.Members | Where-Object { $_.Name -eq 'shortName' }) {
+            $Tenant.shortName = $Request.body.ShortName
+        }
+        else {
+            $Tenant | Add-Member -MemberType NoteProperty -Name shortName -Value $Request.body.ShortName
+        }
 
         Update-AzDataTableEntity -Force @TenantsTable -Entity $Tenant
         Write-LogMessage -API "SetTenantShortName" -tenant $($Tenant.defaultDomainName) -headers $Request.Headers -message "Set Tenant ShortName '$($Request.body.ShortName)' for customer $($Tenant.defaultDomainName)" -Sev 'Info'
@@ -48,3 +54,5 @@ Function Invoke-ExecSetTenantShortName {
         })
     }
 }
+$Tenant = [pscustomobject]@{}
+$Tenant.psobject.Members | Where-Object { $_.Name -eq 'shortName' }
