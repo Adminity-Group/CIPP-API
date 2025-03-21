@@ -42,6 +42,7 @@ function Invoke-CIPPStandardPasswordExpireDisabled {
         if ($DomainswithoutPassExpire) {
             $DomainswithoutPassExpire | ForEach-Object {
                 try {
+                    $Id = $_.id
                     if ( $null -eq $_.passwordNotificationWindowInDays ) {
                         $Body = '{"passwordValidityPeriodInDays": 2147483647, "passwordNotificationWindowInDays": 14 }'
                         Write-Host "PasswordNotificationWindowInDays is null for $($_.id). Setting to the default of 14 days."
@@ -52,7 +53,7 @@ function Invoke-CIPPStandardPasswordExpireDisabled {
                     Write-LogMessage -API 'Standards' -tenant $tenant -message "Disabled Password Expiration for $($_.id)." -sev Info
                 } catch {
                     $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to disable Password Expiration for $($_.id). Error: $ErrorMessage" -sev Error
+                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to disable Password Expiration for $($Id). Error: $ErrorMessage" -sev Error
                 }
             }
         } else {
