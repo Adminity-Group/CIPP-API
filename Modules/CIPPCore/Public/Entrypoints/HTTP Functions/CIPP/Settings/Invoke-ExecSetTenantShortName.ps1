@@ -12,7 +12,7 @@ Function Invoke-ExecSetTenantShortName {
 
     Write-LogMessage -headers $Request.Headers -API $APINAME -message 'Accessed this API' -Sev 'Debug'
 
-    $regex = '^(?![0-9]+$)(?!.*\s)[a-zA-Z0-9-]{1,8}$'
+    $regex = '^(?![0-9]+$)(?!.*\s)[a-zA-Z0-9-]{1,6}$'
 
     if ($Request.body.ShortName -notmatch $regex) {
         Write-LogMessage -API "SetTenantShortName" -tenant $($Tenant.defaultDomainName) -headers $Request.Headers -message "Failed to set Tenant ShortName '$($Request.body.ShortName)' for customer $($Tenant.defaultDomainName). Error: ShortName must be 6 characters or less, and can contain letters (a-z, A-Z), numbers (0-9), and hyphens. Names must not contain only numbers. Names cannot include a blank space" -Sev 'Error'
