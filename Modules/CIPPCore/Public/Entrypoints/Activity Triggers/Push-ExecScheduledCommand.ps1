@@ -107,7 +107,7 @@ function Push-ExecScheduledCommand {
             '*webhook*' {
                 $Webhook = [PSCustomObject]@{
                     'Tenant'   = $Tenant
-                    'TaskInfo' = $Item.TaskInfo
+                    'TaskInfo' = $task
                     'Results'  = $Results
                 }
                 Send-CIPPAlert -Type 'webhook' -Title $title -TenantFilter $Tenant -JSONContent $($Webhook | ConvertTo-Json -Depth 20)
