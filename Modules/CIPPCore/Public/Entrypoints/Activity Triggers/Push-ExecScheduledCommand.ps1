@@ -6,13 +6,13 @@ function Push-ExecScheduledCommand {
     param($Item)
     $item = $Item | ConvertTo-Json -Depth 100 | ConvertFrom-Json
     Write-Host "We are going to be running a scheduled task: $($Item.TaskInfo | ConvertTo-Json -Depth 10)"
-    Write-Host "Original Type: $($Item.TaskInfo.gettype())"
+    #Write-Host "Original Type: $($Item.TaskInfo.gettype())"
 
     $Table = Get-CippTable -tablename 'ScheduledTasks'
-    $task = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '$($Item.TaskInfo.PartitionKey)' and RowKey eq '$($Item.TaskInfo.RowKey)'"
-    Write-Host "New taskinfo: $($task | ConvertTo-Json -Depth 10)"
-    Write-Host "New Type: $($task.gettype())"
-    #$task = $Item.TaskInfo
+    #$task = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '$($Item.TaskInfo.PartitionKey)' and RowKey eq '$($Item.TaskInfo.RowKey)'"
+    #Write-Host "New taskinfo: $($task | ConvertTo-Json -Depth 10)"
+    #Write-Host "New Type: $($task.gettype())"
+    $task = $Item.TaskInfo
     $commandParameters = $Item.Parameters | ConvertTo-Json -Depth 10 | ConvertFrom-Json -AsHashtable
     $Tenant = $Item.Parameters.TenantFilter ?? $Item.TaskInfo.Tenant
     $TenantInfo = Get-Tenants -TenantFilter $Tenant
