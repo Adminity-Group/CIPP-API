@@ -14,7 +14,7 @@ function Invoke-CIPPStandardAutopilotProfile {
             Device Management Standards
         TAG
         DISABLEDFEATURES
-            
+
         ADDEDCOMPONENT
             {"type":"textField","name":"standards.AutopilotProfile.DisplayName","label":"Profile Display Name"}
             {"type":"textField","name":"standards.AutopilotProfile.Description","label":"Profile Description"}
@@ -55,7 +55,7 @@ function Invoke-CIPPStandardAutopilotProfile {
                 description        = $settings.Description
                 usertype           = $usertype
                 DeploymentMode     = $DeploymentMode
-                assignto           = $settings.Assignto
+                assignto           = $settings.Assignto ?? $settings.AssignToAllDevices
                 devicenameTemplate = $Settings.DeviceNameTemplate
                 allowWhiteGlove    = $Settings.allowWhiteglove
                 CollectHash        = $Settings.CollectHash

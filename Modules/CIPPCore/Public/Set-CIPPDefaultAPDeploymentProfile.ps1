@@ -31,10 +31,10 @@ function Set-CIPPDefaultAPDeploymentProfile {
                 return
             }
             Write-Host "WAP: shortname $($Tenant.ShortName)"
-            Write-Host "WAP: Org devTemplate $($DeviceNameTemplate)"
-            Write-Host "WAP: Org devTemplate Type $($DeviceNameTemplate.gettype())"
+            #Write-Host "WAP: Org devTemplate $($DeviceNameTemplate)"
+            #Write-Host "WAP: Org devTemplate Type $($DeviceNameTemplate.gettype())"
             $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $Tenant.ShortName
-            Write-Host "WAP: New devTemplate $($DeviceNameTemplate)"
+            #Write-Host "WAP: New devTemplate $($DeviceNameTemplate)"
         }
         $ObjBody = [pscustomobject]@{
             '@odata.type'                            = '#microsoft.graph.azureADWindowsAutopilotDeploymentProfile'
