@@ -238,3 +238,4 @@ function New-CIPPCAPolicy {
         throw "Failed to create or update conditional access rule $($JSONObj.displayName): $($ErrorMessage.NormalizedError)"
     }
 }
+
