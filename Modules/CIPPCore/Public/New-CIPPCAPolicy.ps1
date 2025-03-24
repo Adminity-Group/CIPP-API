@@ -53,7 +53,7 @@ function New-CIPPCAPolicy {
 
     $displayname = ($RawJSON | ConvertFrom-Json).Displayname
 
-    $JSONObj = $RawJSON | ConvertFrom-Json | Select-Object * -ExcludeProperty ID, GUID, *time*
+    $JSONObj = $RawJSON | ConvertFrom-Json | Select-Object * -ExcludeProperty tenantFilter, ID, GUID, *time*
     Remove-EmptyArrays $JSONObj
     #Remove context as it does not belong in the payload.
     try {
