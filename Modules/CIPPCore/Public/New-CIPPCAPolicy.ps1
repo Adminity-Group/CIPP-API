@@ -62,7 +62,7 @@ function New-CIPPCAPolicy {
         if ($JSONObj.conditions.users.excludeGuestsOrExternalUsers.externalTenants.Members) {
             $JsonObj.conditions.users.excludeGuestsOrExternalUsers.externalTenants.PSObject.Properties.Remove('@odata.context')
         }
-        if ($State -and $State -ne ('donotchange' -or 'NoOverwrite')) {
+        if ($State -and !($State -eq 'donotchange' -or $State -eq 'NoOverwrite')) {
             $Jsonobj.state = $State
         }
     } catch {
@@ -182,7 +182,7 @@ function New-CIPPCAPolicy {
     }
 
     $RawJSON = ConvertTo-Json -InputObject $JSONObj -Depth 10 -Compress
-    Write-Host "Ca: RawJson: $tenantfilter"
+    Write-Host "Ca: Tenant: $tenantfilter"
     Write-Host "Ca: RawJson: $RawJSON"
     try {
         Write-Host 'Checking'
@@ -206,6 +206,10 @@ function New-CIPPCAPolicy {
             }
         } else {
             Write-Host 'Creating'
+            if ($State -eq "NoOverwrite"){
+                $Jsonobj.state = ($RawJSON | ConvertFrom-Json).state
+                $RawJSON = ConvertTo-Json -InputObject $JSONObj -Depth 10 -Compress
+            }
             $CreateRequest = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/policies' -tenantid $tenantfilter -type POST -body $RawJSON
             Write-LogMessage -Headers $User -API $APINAME -tenant $($Tenant) -message "Added Conditional Access Policy $($JSONObj.Displayname)" -Sev 'Info'
             return "Created policy $displayname for $tenantfilter"
