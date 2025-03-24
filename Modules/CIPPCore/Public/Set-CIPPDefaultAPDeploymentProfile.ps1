@@ -30,7 +30,11 @@ function Set-CIPPDefaultAPDeploymentProfile {
                 throw "Tenant ShortName is not set for $($tenantFilter)"
                 return
             }
+            Write-Host "WAP: shortname $($Tenant.ShortName)"
+            Write-Host "WAP: Org devTemplate $($DeviceNameTemplate)"
+            Write-Host "WAP: Org devTemplate Type $($DeviceNameTemplate.gettype())"
             $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $Tenant.ShortName
+            Write-Host "WAP: New devTemplate $($DeviceNameTemplate)"
         }
         $ObjBody = [pscustomobject]@{
             '@odata.type'                            = '#microsoft.graph.azureADWindowsAutopilotDeploymentProfile'
@@ -53,7 +57,7 @@ function Set-CIPPDefaultAPDeploymentProfile {
             }
         }
         $Body = ConvertTo-Json -InputObject $ObjBody
-        Write-Host "WAP Body: $Body"
+        Write-Host "WAP: Body $Body"
 
         $Profiles = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/deviceManagement/windowsAutopilotDeploymentProfiles' -tenantid $tenantfilter | Where-Object -Property displayName -EQ $displayname
         if ($Profiles.count -gt 1) {
