@@ -30,7 +30,7 @@ function Set-CIPPDefaultAPDeploymentProfile {
                 throw "Tenant ShortName is not set for $($tenantFilter)"
                 return
             }
-            $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $ShortName #$Tenant.ShortName
+            $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $Tenant.ShortName
         }
         $ObjBody = [pscustomobject]@{
             '@odata.type'                            = '#microsoft.graph.azureADWindowsAutopilotDeploymentProfile'
