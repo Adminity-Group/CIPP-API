@@ -193,8 +193,10 @@ function New-CIPPCAPolicy {
             } else {
                 Write-Host "overwriting $($CheckExististing.id)"
                 if ($State -eq "NoOverwrite"){
-                    $Jsonobj.state = $CheckExististing.state
+                    $Jsonobj.state =  $CheckExististing.state
+                    $RawJSON = ConvertTo-Json -InputObject $JSONObj -Depth 10 -Compress
                     Write-Host "CA: Keeping state $($CheckExististing.state)"
+                    Write-Host "CA: Rawjson $($RawJSON)"
                 }
                 $PatchRequest = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/identity/conditionalAccess/policies/$($CheckExististing.id)" -tenantid $tenantfilter -type PATCH -body $RawJSON
                 Write-LogMessage -Headers $User -API $APINAME -tenant $($Tenant) -message "Updated Conditional Access Policy $($JSONObj.Displayname) to the template standard." -Sev 'Info'
