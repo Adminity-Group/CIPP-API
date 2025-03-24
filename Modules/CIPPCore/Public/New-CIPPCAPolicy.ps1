@@ -51,7 +51,7 @@ function New-CIPPCAPolicy {
         }
     }
 
-    $displayname = ($RawJSON | ConvertFrom-Json).Displayname
+    $displayname = (($RawJSON | ConvertFrom-Json).Displayname).trim()
 
     $JSONObj = $RawJSON | ConvertFrom-Json | Select-Object * -ExcludeProperty tenantFilter, ID, GUID, *time*
     Remove-EmptyArrays $JSONObj
@@ -108,6 +108,24 @@ function New-CIPPCAPolicy {
             }
         }
     }
+
+    # foreach ($IncludedApplication in $JSONObj.conditions.applications.includeApplications) {
+    #     if (!$IncludedApplication -eq "All"){
+    #         $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/applications' -tenantid $TenantFilter | Where-Object -Property displayName -EQ $IncludedApplication
+    #         if ($CheckExististing) {
+    #             $index = [array]::IndexOf($JSONObj.conditions.applications.includeApplications, $IncludedApplication)
+    #             $JSONObj.conditions.applications.includeApplications[$index] = $CheckExististing.id
+    #         }
+    #     }
+    # }
+
+    # foreach ($ExcludedApplication in $JSONObj.conditions.applications.excludeApplications) {
+    #     $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/applications' -tenantid $TenantFilter | Where-Object -Property displayName -EQ $ExcludedApplication
+    #     if ($CheckExististing) {
+    #         $index = [array]::IndexOf($JSONObj.conditions.applications.excludeApplications, $ExcludedApplication)
+    #         $JSONObj.conditions.applications.excludeApplications[$index] = $CheckExististing.id
+    #     }
+    # }
 
     foreach ($location in $JSONObj.conditions.locations.includeLocations) {
         Write-Host "Replacing $location"
