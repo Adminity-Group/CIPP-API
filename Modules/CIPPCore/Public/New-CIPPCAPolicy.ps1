@@ -182,7 +182,7 @@ function New-CIPPCAPolicy {
     }
 
     $RawJSON = ConvertTo-Json -InputObject $JSONObj -Depth 10 -Compress
-    Write-Host $RawJSON
+    Write-Host "Ca: RawJson: $RawJSON"
     try {
         Write-Host 'Checking'
         $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/policies' -tenantid $TenantFilter | Where-Object -Property displayName -EQ $displayname
