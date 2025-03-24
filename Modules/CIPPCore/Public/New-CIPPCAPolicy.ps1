@@ -182,6 +182,7 @@ function New-CIPPCAPolicy {
     }
 
     $RawJSON = ConvertTo-Json -InputObject $JSONObj -Depth 10 -Compress
+    Write-Host "Ca: RawJson: $tenantfilter"
     Write-Host "Ca: RawJson: $RawJSON"
     try {
         Write-Host 'Checking'
