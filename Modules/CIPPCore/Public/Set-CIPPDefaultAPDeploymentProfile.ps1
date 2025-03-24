@@ -22,7 +22,7 @@ function Set-CIPPDefaultAPDeploymentProfile {
     $User = $Request.Headers
 
     try {
-        If ($DeviceNameTemplate -contains "#SHORTNAME#") {
+        If ($DeviceNameTemplate -like "*#SHORTNAME#*") {
             $Table = Get-CippTable -tablename 'Tenants'
             $Tenant = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'Tenants' and defaultDomainName eq '$($tenantfilter)'" -Property RowKey, PartitionKey, customerId, displayName, shortName, defaultDomainName
             if (!$Tenant.ShortName) {
