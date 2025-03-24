@@ -62,7 +62,7 @@ function New-CIPPCAPolicy {
         if ($JSONObj.conditions.users.excludeGuestsOrExternalUsers.externalTenants.Members) {
             $JsonObj.conditions.users.excludeGuestsOrExternalUsers.externalTenants.PSObject.Properties.Remove('@odata.context')
         }
-        if ($State -and $State -ne 'donotchange') {
+        if ($State -and $State -ne ('donotchange' -or 'NoOverwrite')) {
             $Jsonobj.state = $State
         }
     } catch {
@@ -192,6 +192,10 @@ function New-CIPPCAPolicy {
                 return $false
             } else {
                 Write-Host "overwriting $($CheckExististing.id)"
+                if ($State -eq "NoOverwrite"){
+                    $Jsonobj.state = $CheckExististing.state
+                    Write-Host "CA: Keeping state $($CheckExististing.state)"
+                }
                 $PatchRequest = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/identity/conditionalAccess/policies/$($CheckExististing.id)" -tenantid $tenantfilter -type PATCH -body $RawJSON
                 Write-LogMessage -Headers $User -API $APINAME -tenant $($Tenant) -message "Updated Conditional Access Policy $($JSONObj.Displayname) to the template standard." -Sev 'Info'
                 return "Updated policy $displayname for $tenantfilter"
