@@ -53,6 +53,7 @@ function Set-CIPPDefaultAPDeploymentProfile {
             }
         }
         $Body = ConvertTo-Json -InputObject $ObjBody
+        Write-Host "WAP Body: $Body"
 
         $Profiles = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/deviceManagement/windowsAutopilotDeploymentProfiles' -tenantid $tenantfilter | Where-Object -Property displayName -EQ $displayname
         if ($Profiles.count -gt 1) {
