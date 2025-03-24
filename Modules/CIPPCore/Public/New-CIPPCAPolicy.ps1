@@ -192,6 +192,7 @@ function New-CIPPCAPolicy {
                 return $false
             } else {
                 Write-Host "overwriting $($CheckExististing.id)"
+                Write-Host "CA: state $($State)"
                 if ($State -eq "NoOverwrite"){
                     $Jsonobj.state =  $CheckExististing.state
                     $RawJSON = ConvertTo-Json -InputObject $JSONObj -Depth 10 -Compress
