@@ -21,7 +21,14 @@ function Get-CIPPAlertMFAAdmins {
             $users = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/reports/authenticationMethods/userRegistrationDetails?`$top=999&filter=IsAdmin eq true and isMfaRegistered eq false and userType eq 'member'&`$select=id,userPrincipalName,lastUpdatedDateTime,isMfaRegistered,IsAdmin" -tenantid $($TenantFilter) | Where-Object { $_.userDisplayName -ne 'On-Premises Directory Synchronization Service Account' }
             if ($users.UserPrincipalName) {
                 if ($InputValue){
-                    $DisabledUsers = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/users?`$top=999&filter=accountEnabled eq false&`$select=id,userPrincipalName,accountEnabled" -tenantid $($TenantFilter)
+                    try {
+                        $DisabledUsers = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/users?`$top=999&filter=accountEnabled eq false&`$select=id,userPrincipalName,accountEnabled" -tenantid $($TenantFilter)
+
+                    }
+                    catch {
+                        Start-Sleep 5
+                        $DisabledUsers = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/users?`$top=999&filter=accountEnabled eq false&`$select=id,userPrincipalName,accountEnabled" -tenantid $($TenantFilter)
+                    }
                     $Results = $users.UserPrincipalName | Where-Object { $_ -notin $DisabledUsers.UserPrincipalName }
                 }
                 else {

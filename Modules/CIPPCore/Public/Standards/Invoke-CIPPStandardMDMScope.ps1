@@ -31,96 +31,139 @@ function Invoke-CIPPStandardMDMScope {
 
     param($Tenant, $Settings)
 
-    $CurrentInfo = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000?$expand=includedGroups' -tenantid $Tenant
+    $MDMSettings = @(
+        [PSCustomObject]@{
+            "id" = "d4ebce55-015a-49b5-a083-c84d1797ae8c"
+            "complianceUrl" = "https://portal.manage.microsoft.com/?portalAction"
+            "discoveryUrl" = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
+            "termsOfUseUrl" = "https://portal.manage.microsoft.com/TermsofUse.aspx"
+        },
+        [PSCustomObject]@{
+            "id" = "0000000a-0000-0000-c000-000000000000"
+            "complianceUrl" = "https://portal.manage.microsoft.com/?portalAction=Compliance"
+            "discoveryUrl" = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
+            "termsOfUseUrl" = "https://portal.manage.microsoft.com/TermsofUse.aspx"
+        }
+    )
 
-    $StateIsCorrect =   ($CurrentInfo.termsOfUseUrl -eq 'https://portal.manage.microsoft.com/TermsofUse.aspx') -and
-                        ($CurrentInfo.discoveryUrl -eq 'https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc') -and
-                        ($CurrentInfo.complianceUrl -eq 'https://portal.manage.microsoft.com/?portalAction=Compliance') -and
-                        ($CurrentInfo.appliesTo -eq $Settings.appliesTo) -and
-                        ($Settings.appliesTo -ne 'selected' -or ($CurrentInfo.includedGroups.displayName -contains $Settings.customGroup))
+    #$CurrentInfo = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000?$expand=includedGroups' -tenantid $Tenant
+    $CurrentInfo = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies?$expand=includedGroups' -tenantid $Tenant
 
-    If ($Settings.remediate -eq $true) {
-        if ($StateIsCorrect -eq $true) {
-            Write-LogMessage -API 'Standards' -tenant $tenant -message 'MDM Scope already correctly configured' -sev Info
-        } else {
-            $GraphParam = @{
-                tenantid = $tenant
-                Uri = 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000'
-                ContentType = 'application/json; charset=utf-8'
-                asApp = $false
-                type = 'PATCH'
-                AddedHeaders = @{'Accept-Language' = 0 }
-                Body = @{
-                    'termsOfUseUrl' = 'https://portal.manage.microsoft.com/TermsofUse.aspx'
-                    'discoveryUrl' = 'https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc'
-                    'complianceUrl' = 'https://portal.manage.microsoft.com/?portalAction=Compliance'
-                } | ConvertTo-Json
-            }
-
+    $CurrentInfo | Where-Object { $_.id -notin $MDMSettings.id } | ForEach-Object {
+        $currentsp = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/servicePrincipals?`$filter=appId eq '$($_.id)'" -tenantid $Tenant
+        if ($currentsp) {
+            Write-host "MDM Service principal $($_.id) exists, deleting service principal"
             try {
-                New-GraphPostRequest @GraphParam
-                Write-LogMessage -API 'Standards' -tenant $tenant -message 'Successfully configured MDM Scope' -sev Info
-            } catch {
-                $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to configure MDM Scope." -sev Error -LogData $ErrorMessage
+                New-GraphDeleteRequest -uri "https://graph.microsoft.com/beta/servicePrincipals/$($currentsp.id)" -tenantid $Tenant
+                Start-Sleep 30
             }
+            catch {
+                $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
+                Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to delete $($MDMSettings.id[0]) MDM service principal" -sev Error -LogData $ErrorMessage
+            }
+        }
 
-            # Workaround for MDM Scope Assignment error: "Could not set MDM Scope for [TENANT]: Simultaneous patch requests on both the appliesTo and URL properties are currently not supported."
-            if ($Settings.appliesTo -ne 'selected') {
+        try {
+            Write-host "MDM Service principal $($_.id) missing, creating service principal"
+            $NewSP =  New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/servicePrincipals" -tenantid $Tenant -Body @{"appId" = $_.id}
+            Start-Sleep 5
+        }
+        catch {
+            $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
+            Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to create $($MDMSettings.id[0]) MDM service principal" -sev Error -LogData $ErrorMessage
+        }
+    }
+
+    foreach ($MDMPolicy in $CurrentInfo){
+        $MDMSetting = $MDMSettings | Where-Object { $_.id -eq $MDMPolicy.id }
+        $StateIsCorrect =   ($MDMPolicy.termsOfUseUrl -eq $MDMSetting.termsOfUseUrl) -and
+                        ($MDMPolicy.discoveryUrl -eq $MDMSetting.discoveryUrl) -and
+                        ($MDMPolicy.complianceUrl -eq $MDMSetting.complianceUrl) -and
+                        ($MDMPolicy.appliesTo -eq $Settings.appliesTo) -and
+                        ($Settings.appliesTo -ne 'selected' -or ($MDMPolicy.includedGroups.displayName -contains $Settings.customGroup))
+
+        If ($Settings.remediate -eq $true) {
+            if ($StateIsCorrect -eq $true) {
+                Write-LogMessage -API 'Standards' -tenant $tenant -message "MDM Scope $($MDMPolicy.id) already correctly configured" -sev Info
+            } else {
                 $GraphParam = @{
                     tenantid = $tenant
-                    Uri = 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000'
+                    Uri = "https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/$($MDMPolicy.id)"
                     ContentType = 'application/json; charset=utf-8'
                     asApp = $false
                     type = 'PATCH'
                     AddedHeaders = @{'Accept-Language' = 0 }
                     Body = @{
-                        'appliesTo' = $Settings.appliesTo
+                        'termsOfUseUrl' = $MDMSetting.termsOfUseUrl
+                        'discoveryUrl' = $MDMSetting.discoveryUrl
+                        'complianceUrl' = $MDMSetting.complianceUrl
                     } | ConvertTo-Json
                 }
 
                 try {
                     New-GraphPostRequest @GraphParam
-                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Successfully assigned $($Settings.appliesTo) to MDM Scope" -sev Info
+                    Write-LogMessage -API 'Standards' -tenant $tenant -message 'Successfully configured MDM Scope' -sev Info
                 } catch {
                     $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to assign $($Settings.appliesTo) to MDM Scope." -sev Error -LogData $ErrorMessage
-                }
-            } else {
-                $GroupID = (New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/groups?`$top=999&`$select=id,displayName&`$filter=displayName eq '$($Settings.customGroup)'" -tenantid $tenant -asApp $true).id
-                $GraphParam = @{
-                    tenantid = $tenant
-                    Uri = 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000/includedGroups/$ref'
-                    ContentType = 'application/json; charset=utf-8'
-                    asApp = $false
-                    type = 'POST'
-                    AddedHeaders = @{'Accept-Language' = 0 }
-                    Body = @{
-                        '@odata.id' = "https://graph.microsoft.com/odata/groups('$GroupID')"
-                    } | ConvertTo-Json
+                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to configure MDM Scope." -sev Error -LogData $ErrorMessage
                 }
 
-                try {
-                    New-GraphPostRequest @GraphParam
-                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Successfully assigned $($Settings.customGroup) to MDM Scope" -sev Info
-                } catch {
-                    $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                    Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to assign $($Settings.customGroup) to MDM Scope" -sev Error -LogData $ErrorMessage
+                # Workaround for MDM Scope Assignment error: "Could not set MDM Scope for [TENANT]: Simultaneous patch requests on both the appliesTo and URL properties are currently not supported."
+                if ($Settings.appliesTo -ne 'selected') {
+                    $GraphParam = @{
+                        tenantid = $tenant
+                        Uri = "https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/$($MDMPolicy.id)"
+                        ContentType = 'application/json; charset=utf-8'
+                        asApp = $false
+                        type = 'PATCH'
+                        AddedHeaders = @{'Accept-Language' = 0 }
+                        Body = @{
+                            'appliesTo' = $Settings.appliesTo
+                        } | ConvertTo-Json
+                    }
+
+                    try {
+                        New-GraphPostRequest @GraphParam
+                        Write-LogMessage -API 'Standards' -tenant $tenant -message "Successfully assigned $($Settings.appliesTo) to MDM Scope $($MDMPolicy.id)" -sev Info
+                    } catch {
+                        $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
+                        Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to assign $($Settings.appliesTo) to MDM Scope $($MDMPolicy.id)." -sev Error -LogData $ErrorMessage
+                    }
+                } else {
+                    $GroupID = (New-GraphGetRequest -Uri "https://graph.microsoft.com/beta/groups?`$top=999&`$select=id,displayName&`$filter=displayName eq '$($Settings.customGroup)'" -tenantid $tenant -asApp $true).id
+                    $GraphParam = @{
+                        tenantid = $tenant
+                        Uri = "https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/$($MDMPolicy.id)/includedGroups/$ref"
+                        ContentType = 'application/json; charset=utf-8'
+                        asApp = $false
+                        type = 'POST'
+                        AddedHeaders = @{'Accept-Language' = 0 }
+                        Body = @{
+                            '@odata.id' = "https://graph.microsoft.com/odata/groups('$GroupID')"
+                        } | ConvertTo-Json
+                    }
+
+                    try {
+                        New-GraphPostRequest @GraphParam
+                        Write-LogMessage -API 'Standards' -tenant $tenant -message "Successfully assigned $($Settings.customGroup) to MDM Scope $($MDMPolicy.id)" -sev Info
+                    } catch {
+                        $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
+                        Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to assign $($Settings.customGroup) to MDM Scope $($MDMPolicy.id)." -sev Error -LogData $ErrorMessage
+                    }
                 }
             }
         }
-    }
 
-    if ($Settings.alert -eq $true -eq $true) {
-        if ($StateIsCorrect) {
-            Write-LogMessage -API 'Standards' -tenant $tenant -message 'MDM Scope is correctly configured' -sev Info
-        } else {
-            Write-LogMessage -API 'Standards' -tenant $tenant -message 'MDM Scope is not correctly configured' -sev Alert
+        if ($Settings.alert -eq $true -eq $true) {
+            if ($StateIsCorrect) {
+                Write-LogMessage -API 'Standards' -tenant $tenant -message "MDM Scope is correctly configured $($MDMPolicy.id)" -sev Info
+            } else {
+                Write-LogMessage -API 'Standards' -tenant $tenant -message "MDM Scope is not correctly configured $($MDMPolicy.id)" -sev Alert
+            }
+        }
+
+        if ($Settings.report -eq $true) {
+            Add-CIPPBPAField -FieldName 'MDMScope' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
         }
     }
-
-    if ($Settings.report -eq $true) {
-        Add-CIPPBPAField -FieldName 'MDMScope' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
-    }
-
 }
