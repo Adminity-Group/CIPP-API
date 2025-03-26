@@ -29,10 +29,10 @@ Function Invoke-AddScript {
                 Write-Host 'Calling Adding Script'
                 $null = Set-CIPPIntuneScript -tenantFilter $Tenant -RawJSON $RawJSON -Overwrite $Overwrite -APIName $APIName -Headers $Request.Headers -AssignTo $AssignTo -ExcludeGroup $ExcludeGroup -ScriptType $ScriptType -Displayname $Displayname -Description $description -errorAction Stop
                 $Results += "Added Script $($Displayname) to tenant $($Tenant.addedFields.defaultDomainName)"
-                Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $($Tenant) -message "Added policy $($Displayname)" -Sev 'Info'
+                Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $Tenant.addedFields.defaultDomainName -message "Added policy $($Displayname)" -Sev 'Info'
             } catch {
                 $Results += "Failed to add script $($Displayname) to tenant $($Tenant.addedFields.defaultDomainName). $($_.Exception.Message)"
-                Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $($Tenant) -message "Failed to add script $($Displayname). Error: $($_.Exception.Message)" -Sev 'Error'
+                Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $Tenant.addedFields.defaultDomainName -message "Failed to add script $($Displayname). Error: $($_.Exception.Message)" -Sev 'Error'
                 continue
             }
 
@@ -53,7 +53,7 @@ Function Invoke-AddScript {
             StatusCode = [HttpStatusCode]::BadRequest
             Body       = $body
         })
-        Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $($Tenant) -message "Failed to proccess request policy. Error: $($_.Exception.Message)" -Sev 'Error'
+        Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $Tenant.addedFields.defaultDomainName -message "Failed to proccess request policy. Error: $($_.Exception.Message)" -Sev 'Error'
     }
 
 }

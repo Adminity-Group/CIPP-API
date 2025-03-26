@@ -95,7 +95,7 @@ function Set-CIPPIntuneScript {
     }
     catch {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-        Write-LogMessage -headers $Headers -API $APINAME -tenant $tenant -message "Failed to add intune script $($DisplayName)." -sev Error -LogData $ErrorMessage
+        Write-LogMessage -headers $Headers -API $APINAME -tenant $Tenant.defaultDomainName -message "Failed to add intune script $($DisplayName)." -sev Error -LogData $ErrorMessage
         throw "Failed to add intune script $($DisplayName). Error: $ErrorMessage"
     }
 }
