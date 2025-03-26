@@ -80,38 +80,4 @@ function Invoke-AddScriptTemplate {
             Body       = $body
         })
     }
-
-
-
-
-    # switch($Request.Method) {
-    #     "GET" {
-    #         $parms = @{
-    #             uri = "$graphUrl/deviceManagement/deviceManagementScripts/$($Request.Query.ScriptId)"
-    #             tenantid = $Request.Query.TenantFilter
-    #         }
-
-    #         $intuneScript = New-GraphGetRequest @parms
-    #         Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
-    #             StatusCode = [HttpStatusCode]::OK
-    #             Body       = $intuneScript
-    #         })
-    #     }
-    #     "PATCH" {
-    #         $parms = @{
-    #             uri = "$graphUrl/deviceManagement/deviceManagementScripts/$($Request.Body.ScriptId)"
-    #             tenantid = $Request.Body.TenantFilter
-    #             body = $Request.Body.IntuneScript
-    #         }
-    #         $patchResult = New-GraphPOSTRequest @parms -type "PATCH"
-    #         $body = [pscustomobject]@{'Results' = $patchResult }
-    #         Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
-    #             StatusCode = [HttpStatusCode]::OK
-    #             Body       = $body
-    #         })
-    #     }
-    #     "POST" {
-    #         Write-Output "Adding script"
-    #     }
-    # }
 }
