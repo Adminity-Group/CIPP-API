@@ -14,7 +14,7 @@ function Invoke-AddScriptTemplate {
     $Headers = $Request.Headers
     Write-LogMessage -Headers $Headers -API $APINAME -message 'Accessed this API' -Sev Debug
 
-    $GUID = (New-Guid).GUID
+
     $graphUrl = "https://graph.microsoft.com/beta"
     $ScriptInfo = @(
         [PSCustomObject]@{
@@ -51,18 +51,18 @@ function Invoke-AddScriptTemplate {
             Description = $intuneScript.Description
             RAWJson     = $intuneScript | ConvertTo-Json -Depth 5 -Compress
             Type        = $Request.body.scriptType
-            GUID        = $GUID
+            GUID        = $intuneScript.id
         } | ConvertTo-Json
 
         $Table = Get-CippTable -tablename 'templates'
         $Table.Force = $true
         Add-CIPPAzDataTableEntity @Table -Entity @{
             JSON         = "$object"
-            RowKey       = "$GUID"
+            RowKey       = "$($intuneScript.id)"
             PartitionKey = 'ScriptTemplate'
         }
 
-        Write-LogMessage -headers $Request.Headers -API $APINAME -message "Created script template $($intuneScript.displayName) with GUID $GUID using an original policy from a tenant" -Sev 'Debug'
+        Write-LogMessage -headers $Request.Headers -API $APINAME -message "Created script template $($intuneScript.displayName) with GUID $($intuneScript.id) using an original policy from a tenant" -Sev 'Debug'
 
         $body = [pscustomobject]@{'Results' = 'Successfully added script template' }
 
