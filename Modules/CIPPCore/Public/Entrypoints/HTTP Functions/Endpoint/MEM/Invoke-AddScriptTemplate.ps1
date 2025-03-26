@@ -15,22 +15,49 @@ function Invoke-AddScriptTemplate {
     Write-LogMessage -Headers $Headers -API $APINAME -message 'Accessed this API' -Sev Debug
 
     $GUID = (New-Guid).GUID
+    $graphUrl = "https://graph.microsoft.com/beta"
+    $ScriptInfo = @(
+        [PSCustomObject]@{
+            "ScriptType" = 'Windows'
+            "url"    = '/deviceManagement/deviceManagementScripts'
+        },
+        [PSCustomObject]@{
+            "ScriptType" = 'MacOS'
+            "url"    = '/deviceManagement/deviceShellScripts'
+        },
+        [PSCustomObject]@{
+            "ScriptType" = 'Remediation'
+            "url"    = '/deviceManagement/deviceHealthScripts'
+        },
+        [PSCustomObject]@{
+            "ScriptType" = 'Linux'
+            "url"    = '/deviceManagement/configurationPolicies'
+        }
+    )
+    $TypeURL = ($ScriptInfo | Where-Object { $_.ScriptType -eq $Request.Body.scriptType }).url
 
     Write-Host "Script: $($Request | ConvertTo-Json -Depth 5)"
     try {
 
-        $graphUrl = "https://graph.microsoft.com/beta"
         $parms = @{
-            uri = "$graphUrl/deviceManagement/deviceManagementScripts/$($Request.body.ID)"
+            uri = "$graphUrl$TypeURL/$($Request.body.ID)/?`$expand=assignments"
             tenantid = $Request.Body.TenantFilter
         }
 
-        $intuneScript = New-GraphGetRequest @parms | ConvertTo-Json -Depth 5 -Compress
+        $intuneScript = New-GraphGetRequest @parms -ErrorAction Stop
+
+        $object = [PSCustomObject]@{
+            Displayname = $intuneScript.DisplayName
+            Description = $intuneScript.Description
+            RAWJson     = $intuneScript | ConvertTo-Json -Depth 5 -Compress
+            Type        = $Request.body.scriptType
+            GUID        = $GUID
+        } | ConvertTo-Json
 
         $Table = Get-CippTable -tablename 'templates'
         $Table.Force = $true
         Add-CIPPAzDataTableEntity @Table -Entity @{
-            JSON         = "$intuneScript"
+            JSON         = "$object"
             RowKey       = "$GUID"
             PartitionKey = 'ScriptTemplate'
         }
