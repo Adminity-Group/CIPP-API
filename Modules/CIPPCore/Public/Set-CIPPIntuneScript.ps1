@@ -55,8 +55,9 @@ function Set-CIPPIntuneScript {
                     type = 'PATCH'
                     body = $RawJSON
                 }
+                write-host "Script graphparm: $($GraphParam |ConvertTo-Json -Depth 5)"
                 if ($OverWrite) {
-                    $CreateRequest = New-GraphPOSTRequest @GraphParam
+                    $CreateRequest = New-GraphPOSTRequest @GraphParam -erroraction stop
                     Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Updated policy $($DisplayName) to template defaults" -Sev 'info'
 
                     ##Missing assignment function
@@ -69,7 +70,16 @@ function Set-CIPPIntuneScript {
             }
         }
         else {
-            $CreateRequest = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta$TypeURL" -tenantid $tenantFilter -type POST -body $RawJSON
+
+            $GraphParam = @{
+                uri = "https://graph.microsoft.com/beta$TypeURL"
+                tenantid = $tenantFilter
+                type = 'PATCH'
+                body = $RawJSON
+            }
+            write-host "Script graphparm: $($GraphParam |ConvertTo-Json -Depth 5)"
+
+            $CreateRequest = New-GraphPOSTRequest @GraphParam  -erroraction stop
             Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Added policy $($DisplayName) via template" -Sev 'info'
             if ($AssignTo) {
                 Write-Host "Assigning script to $($AssignTo) with ID $($CreateRequest.id) for tenant $tenantFilter"
