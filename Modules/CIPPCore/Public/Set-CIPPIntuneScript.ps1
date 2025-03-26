@@ -82,7 +82,7 @@ function Set-CIPPIntuneScript {
 
             $CreateRequest = New-GraphPOSTRequest @GraphParam  -erroraction stop
             Write-LogMessage -headers $Headers -API $APINAME -tenant $($Tenant.defaultDomainName) -message "Added policy $($DisplayName) via template" -Sev 'info'
-            if ($AssignTo) {
+            if ($AssignTo -and $AssignTo -ne 'On') {
                 Write-Host "Assigning script to $($AssignTo) with ID $($CreateRequest.id) for tenant $($Tenant.defaultDomainName)"
                 Write-Host "ID is $($CreateRequest.id)"
 
