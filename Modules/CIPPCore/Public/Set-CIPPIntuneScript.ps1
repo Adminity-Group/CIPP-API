@@ -32,8 +32,6 @@ function Set-CIPPIntuneScript {
     )
     $TypeURL = ($ScriptInfo | Where-Object { $_.ScriptType -eq $scriptType }).url
 
-    "/deviceManagement/deviceManagementScripts"
-
     $JSONObj = $RawJSON | ConvertFrom-Json | Select-Object * -ExcludeProperty "@odata.context", id, *assignments*,createdDateTime,lastModifiedDateTime
 
     try {

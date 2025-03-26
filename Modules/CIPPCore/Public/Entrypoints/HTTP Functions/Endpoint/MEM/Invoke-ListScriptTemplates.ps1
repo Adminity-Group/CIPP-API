@@ -51,7 +51,7 @@ Function Invoke-ListScriptTemplates {
     # Associate values to output bindings by calling 'Push-OutputBinding'.
     Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
             StatusCode = [HttpStatusCode]::OK
-            Body       = ($Templates | ConvertTo-Json -Depth 100)
+            Body       = ($Templates | ConvertTo-Json -Depth 100 -AsArray)
         })
 
 }
