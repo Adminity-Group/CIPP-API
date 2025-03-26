@@ -154,19 +154,19 @@ function Invoke-CIPPStandardMDMScope {
             }
         }
 
-    if ($Settings.alert -eq $true) {
-        if ($StateIsCorrect) {
-            Write-LogMessage -API 'Standards' -tenant $tenant -message 'MDM Scope is correctly configured' -sev Info
-        } else {
-            Write-StandardsAlert -message 'MDM Scope is not correctly configured' -object $CurrentInfo -tenant $tenant -standardName 'MDMScope' -standardId $Settings.standardId
-            Write-LogMessage -API 'Standards' -tenant $tenant -message 'MDM Scope is not correctly configured' -sev Info
+        if ($Settings.alert -eq $true) {
+            if ($StateIsCorrect) {
+                Write-LogMessage -API 'Standards' -tenant $tenant -message 'MDM Scope is correctly configured' -sev Info
+            } else {
+                Write-StandardsAlert -message 'MDM Scope is not correctly configured' -object $CurrentInfo -tenant $tenant -standardName 'MDMScope' -standardId $Settings.standardId
+                Write-LogMessage -API 'Standards' -tenant $tenant -message 'MDM Scope is not correctly configured' -sev Info
+            }
+        }
+
+        if ($Settings.report -eq $true) {
+            $state = $StateIsCorrect ? $true : $CurrentInfo
+            Set-CIPPStandardsCompareField -FieldName 'standards.MDMScope' -FieldValue $state -TenantFilter $Tenant
+            Add-CIPPBPAField -FieldName 'MDMScope' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
         }
     }
-
-    if ($Settings.report -eq $true) {
-        $state = $StateIsCorrect ? $true : $CurrentInfo
-        Set-CIPPStandardsCompareField -FieldName 'standards.MDMScope' -FieldValue $state -TenantFilter $Tenant
-        Add-CIPPBPAField -FieldName 'MDMScope' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
-    }
-
 }
