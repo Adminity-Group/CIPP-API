@@ -39,10 +39,12 @@ function New-CIPPCAPolicy {
     # Helper function to replace group display names with GUIDs
     function Replace-GroupNameWithId {
         param($groupNames)
-        return $groupNames | ForEach-Object {
+
+        $GroupIds = [System.Collections.Generic.List[string]]::new()
+        $groupNames | ForEach-Object {
             if (Test-IsGuid $_) {
                 Write-LogMessage -Headers $User -API $APINAME -message "Already GUID, no need to replace: $_" -Sev 'Debug'
-                $_ # it's a GUID, so we keep it
+                $GroupIds.Add($_) # it's a GUID, so we keep it
             } else {
                 $groupId = ($groups | Where-Object -Property displayName -EQ $_).id # it's a display name, so we get the group ID
                 Write-LogMessage -Headers $User -API $APINAME -message "Replaced group name $_ with ID $groupId" -Sev 'Debug'
@@ -71,13 +73,13 @@ function New-CIPPCAPolicy {
 
     #If Grant Controls contains authenticationstrength, create these and then replace the id
     if ($JSONobj.GrantControls.authenticationStrength.policyType -eq 'custom' -or $JSONobj.GrantControls.authenticationStrength.policyType -eq 'BuiltIn') {
-        $ExistingStrength = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/authenticationStrength/policies/' -tenantid $TenantFilter | Where-Object -Property displayName -EQ $JSONobj.GrantControls.authenticationStrength.displayName
+        $ExistingStrength = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/authenticationStrength/policies/' -tenantid $TenantFilter -asApp $true | Where-Object -Property displayName -EQ $JSONobj.GrantControls.authenticationStrength.displayName
         if ($ExistingStrength) {
             $JSONObj.GrantControls.authenticationStrength = @{ id = $ExistingStrength.id }
 
         } else {
             $Body = ConvertTo-Json -InputObject $JSONObj.GrantControls.authenticationStrength
-            $GraphRequest = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/authenticationStrength/policies' -body $body -Type POST -tenantid $tenantfilter
+            $GraphRequest = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/authenticationStrength/policies' -body $body -Type POST -tenantid $tenantfilter -asApp $true
             $JSONObj.GrantControls.authenticationStrength = @{ id = $ExistingStrength.id }
             Write-LogMessage -Headers $User -API $APINAME -message "Created new Authentication Strength Policy: $($JSONObj.GrantControls.authenticationStrength.displayName)" -Sev 'Info'
         }
@@ -88,7 +90,7 @@ function New-CIPPCAPolicy {
     $LocationLookupTable = foreach ($locations in $jsonobj.LocationInfo) {
         foreach ($location in $locations) {
             if (!$location.displayName) { continue }
-            $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/namedLocations' -tenantid $TenantFilter
+            $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/namedLocations' -tenantid $TenantFilter -asApp $true
             if ($Location.displayName -in $CheckExististing.displayName) {
                 [pscustomobject]@{
                     id   = ($CheckExististing | Where-Object -Property displayName -EQ $Location.displayName).id
@@ -99,7 +101,7 @@ function New-CIPPCAPolicy {
             } else {
                 if ($location.countriesAndRegions) { $location.countriesAndRegions = @($location.countriesAndRegions) }
                 $Body = ConvertTo-Json -InputObject $Location
-                $GraphRequest = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/namedLocations' -body $body -Type POST -tenantid $tenantfilter
+                $GraphRequest = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/namedLocations' -body $body -Type POST -tenantid $tenantfilter -asApp $true
                 Write-LogMessage -Headers $User -API $APINAME -message "Created new Named Location: $($location.displayName)" -Sev 'Info'
                 [pscustomobject]@{
                     id   = $GraphRequest.id
@@ -128,9 +130,9 @@ function New-CIPPCAPolicy {
     # }
 
     foreach ($location in $JSONObj.conditions.locations.includeLocations) {
-        Write-Host "Replacing $location"
+        Write-Information "Replacing $location"
         $lookup = $LocationLookupTable | Where-Object -Property name -EQ $location
-        Write-Host "Found $lookup"
+        Write-Information "Found $lookup"
         if (!$lookup) { continue }
         $index = [array]::IndexOf($JSONObj.conditions.locations.includeLocations, $location)
         $JSONObj.conditions.locations.includeLocations[$index] = $lookup.id
@@ -144,11 +146,11 @@ function New-CIPPCAPolicy {
     }
     switch ($ReplacePattern) {
         'none' {
-            Write-Host 'Replacement pattern for inclusions and exclusions is none'
+            Write-Information 'Replacement pattern for inclusions and exclusions is none'
             break
         }
         'AllUsers' {
-            Write-Host 'Replacement pattern for inclusions and exclusions is All users. This policy will now apply to everyone.'
+            Write-Information 'Replacement pattern for inclusions and exclusions is All users. This policy will now apply to everyone.'
             if ($JSONObj.conditions.users.includeUsers -ne 'All') { $JSONObj.conditions.users.includeUsers = @('All') }
             if ($JSONObj.conditions.users.excludeUsers) { $JSONObj.conditions.users.excludeUsers = @() }
             if ($JSONObj.conditions.users.includeGroups) { $JSONObj.conditions.users.includeGroups = @() }
@@ -156,12 +158,15 @@ function New-CIPPCAPolicy {
         }
         'displayName' {
             try {
-                Write-Host 'Replacement pattern for inclusions and exclusions is displayName.'
-                $users = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/users?$select=id,displayName' -tenantid $TenantFilter
-                $groups = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName' -tenantid $TenantFilter
+                Write-Information 'Replacement pattern for inclusions and exclusions is displayName.'
+                $users = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/users?$select=id,displayName' -tenantid $TenantFilter -asApp $true
+                $groups = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName' -tenantid $TenantFilter -asApp $true
 
-                if ($JSONObj.conditions.users.includeUsers -and $JSONObj.conditions.users.includeUsers -notin 'All', 'None', 'GuestOrExternalUsers') { $JSONObj.conditions.users.includeUsers = @(($users | Where-Object -Property displayName -In $JSONObj.conditions.users.includeUsers).id) }
-                if ($JSONObj.conditions.users.excludeUsers) { $JSONObj.conditions.users.excludeUsers = @(($users | Where-Object -Property displayName -In $JSONObj.conditions.users.excludeUsers).id) }
+                foreach ($userType in 'includeUsers', 'excludeUsers') {
+                    if ($JSONObj.conditions.users.PSObject.Properties.Name -contains $userType -and $JSONObj.conditions.users.$userType -notin 'All', 'None', 'GuestOrExternalUsers') {
+                        $JSONObj.conditions.users.$userType = @(Replace-UserNameWithId -userNames $JSONObj.conditions.users.$userType)
+                    }
+                }
 
                 # Check the included and excluded groups
                 foreach ($groupType in 'includeGroups', 'excludeGroups') {
@@ -203,8 +208,8 @@ function New-CIPPCAPolicy {
     Write-Host "Ca: Tenant: $tenantfilter"
     Write-Host "Ca: RawJson: $RawJSON"
     try {
-        Write-Host 'Checking'
-        $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/policies' -tenantid $TenantFilter | Where-Object -Property displayName -EQ $displayname
+        Write-Information 'Checking'
+        $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/policies' -tenantid $TenantFilter -asApp $true | Where-Object -Property displayName -EQ $displayname
         if ($CheckExististing) {
             if ($Overwrite -ne $true) {
                 Throw "Conditional Access Policy with Display Name $($Displayname) Already exists"
