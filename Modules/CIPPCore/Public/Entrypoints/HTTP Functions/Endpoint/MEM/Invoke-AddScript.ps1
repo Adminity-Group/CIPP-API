@@ -15,7 +15,8 @@ Function Invoke-AddScript {
 
     try {
         Write-host "Script: $($Request.Body | ConvertTo-Json -Depth 5)"
-        $Tenants = ($Request.Body.tenantFilter.value)
+
+        $Tenants = ($Request.Body.tenantFilter.addedFields)
         if ('AllTenants' -in $Tenants) { $Tenants = (Get-Tenants).defaultDomainName }
         $displayname = $Request.Body.displayName
         $description = $Request.Body.Description
@@ -27,14 +28,15 @@ Function Invoke-AddScript {
         $ScriptType = $Request.Body.TemplateType
 
         $Results = foreach ($Tenant in $Tenants) {
+            $TenantName = $Tenant.defaultDomainName
             try {
                 Write-Host 'Calling Adding Script'
                 $null = Set-CIPPIntuneScript -tenantFilter $Tenant -RawJSON $RawJSON -Overwrite $Overwrite -APIName $APIName -Headers $Request.Headers -AssignTo $AssignTo -ExcludeGroup $ExcludeGroup -ScriptType $ScriptType -Displayname $Displayname -Description $description -errorAction Stop
-                $Results += "Added Script $($Displayname) to tenant $($Tenant)"
-                Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $Tenant -message "Added policy $($Displayname)" -Sev 'Info'
+                $Results += "Added Script $($Displayname) to tenant $($TenantName)"
+                Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $TenantName -message "Added policy $($Displayname)" -Sev 'Info'
             } catch {
-                $Results += "Failed to add script $($Displayname) to tenant $($Tenant). $($_.Exception.Message)"
-                Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $Tenant -message "Failed to add script $($Displayname). Error: $($_.Exception.Message)" -Sev 'Error'
+                $Results += "Failed to add script $($Displayname) to tenant $($TenantName). $($_.Exception.Message)"
+                Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $TenantName -message "Failed to add script $($Displayname). Error: $($_.Exception.Message)" -Sev 'Error'
                 continue
             }
 
@@ -55,7 +57,7 @@ Function Invoke-AddScript {
             StatusCode = [HttpStatusCode]::BadRequest
             Body       = $body
         })
-        Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $Tenant -message "Failed to proccess request policy. Error: $($_.Exception.Message)" -Sev 'Error'
+        Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $TenantName -message "Failed to proccess request policy. Error: $($_.Exception.Message)" -Sev 'Error'
     }
 
 }
