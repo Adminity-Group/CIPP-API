@@ -85,7 +85,8 @@ function Set-CIPPIntuneScript {
                 Write-Host "Assigning script to $($AssignTo) with ID $($CreateRequest.id) for tenant $($tenantFilter.defaultDomainName)"
                 Write-Host "ID is $($CreateRequest.id)"
                 try {
-                    Set-CIPPAssignedPolicy -GroupName $AssignTo -PolicyId $CreateRequest.id -PlatformType $ScriptType -Type "Script" -baseuri "https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assignments" -TenantFilter $tenantFilter.customerId -ExcludeGroup $ExcludeGroup -errorAction Stop
+                    Write-Host "Script ass: https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assignments"
+                    Set-CIPPAssignedPolicy -GroupName $AssignTo -PolicyId $CreateRequest.id -PlatformType $ScriptType -Type "Script" -baseuri "https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assignments" -TenantFilter $tenantFilter.customerId -ExcludeGroup $ExcludeGroup -APIName $APINAME -Headers $Headers -errorAction Stop
                     Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter.defaultDomainName) -message "Successfully set assignment to $($AssignTo) for script $($DisplayName) via template" -Sev 'info'
                 }
                 catch {
