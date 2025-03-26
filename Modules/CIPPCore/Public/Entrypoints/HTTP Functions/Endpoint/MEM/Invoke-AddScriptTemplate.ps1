@@ -21,8 +21,8 @@ function Invoke-AddScriptTemplate {
 
         $graphUrl = "https://graph.microsoft.com/beta"
         $parms = @{
-            uri = "$graphUrl/deviceManagement/deviceManagementScripts/$($Request.Query.ScriptId)"
-            tenantid = $Request.Query.TenantFilter
+            uri = "$graphUrl/deviceManagement/deviceManagementScripts/$($Request.body.ID)"
+            tenantid = $Request.Body.TenantFilter
         }
 
         $intuneScript = New-GraphGetRequest @parms | ConvertTo-Json -Depth 5 -Compress
