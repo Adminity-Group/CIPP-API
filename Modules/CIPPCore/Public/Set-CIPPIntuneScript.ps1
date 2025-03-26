@@ -75,7 +75,7 @@ function Set-CIPPIntuneScript {
             $GraphParam = @{
                 uri = "https://graph.microsoft.com/beta$TypeURL"
                 tenantid = $Tenant.customerId
-                type = 'PATCH'
+                type = 'POST'
                 body = $RawJSON
             }
             write-host "Script graphparm: $($GraphParam |ConvertTo-Json -Depth 5)"
