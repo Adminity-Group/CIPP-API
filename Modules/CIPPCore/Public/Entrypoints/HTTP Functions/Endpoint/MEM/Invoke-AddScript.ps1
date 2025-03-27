@@ -16,7 +16,7 @@ Function Invoke-AddScript {
     try {
         Write-host "Script: $($Request.Body | ConvertTo-Json -Depth 5)"
 
-        $Tenants = ($Request.Body.tenantFilter.addedFields)
+        $Tenants = ($Request.Body.tenantFilter.addedFields.defaultDomainName)
         if ('AllTenants' -in $Tenants) { $Tenants = (Get-Tenants).defaultDomainName }
         $displayname = $Request.Body.displayName
         $description = $Request.Body.Description

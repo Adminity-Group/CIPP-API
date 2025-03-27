@@ -38,7 +38,7 @@ function Set-CIPPIntuneScript {
 
     try {
 
-        $CheckExististing = New-GraphGETRequest -uri "https://graph.microsoft.com/beta$TypeURL?`$expand=assignments" -tenantid $tenantFilter.customerId | Where-Object { $_.displayName -eq $DisplayName }
+        $CheckExististing = New-GraphGETRequest -uri "https://graph.microsoft.com/beta$TypeURL?`$expand=assignments" -tenantid $tenantFilter | Where-Object { $_.displayName -eq $DisplayName }
         if ($CheckExististing){
             $StateIsCorrect =   ($CheckExististing.description -eq $DisplayName) -and
                         ($MDMPolicy.discoveryUrl -eq $Description) -and
@@ -48,7 +48,7 @@ function Set-CIPPIntuneScript {
                         ($CheckExististing.scriptContent -eq $JSONObj.scriptContent) -and
                         ($CheckExististing.assignments.target -eq $JSONObj.assignments.target)
             if ($StateIsCorrect -eq $true) {
-                Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter.defaultDomainName) -message "Script $($DisplayName) already correctly configured" -sev Info
+                Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Script $($DisplayName) already correctly configured" -sev Info
             } else {
 
                 # $GraphParam = @{
@@ -60,7 +60,7 @@ function Set-CIPPIntuneScript {
                 write-host "Script graphparm: $($GraphParam |ConvertTo-Json -Depth 5)"
                 if ($OverWrite) {
                     #$CreateRequest = New-GraphPOSTRequest @GraphParam -erroraction stop
-                    Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter.defaultDomainName) -message "Updated policy $($DisplayName) to template defaults" -Sev 'info'
+                    Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Updated policy $($DisplayName) to template defaults" -Sev 'info'
 
                     $GraphParam = @{
                         uri = "https://graph.microsoft.com/beta$TypeURL/$($CheckExististing.id)"
@@ -73,8 +73,8 @@ function Set-CIPPIntuneScript {
                     ##Missing assignment function
                 }
                 else{
-                    Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter.defaultDomainName) -message "skipping script $($DisplayName) already exists" -sev Info
-                    return "skipping script $($DisplayName) for $($tenantFilter.defaultDomainName) already exists"
+                    Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "skipping script $($DisplayName) already exists" -sev Info
+                    return "skipping script $($DisplayName) for $($tenantFilter) already exists"
                 }
 
             }
@@ -90,25 +90,25 @@ function Set-CIPPIntuneScript {
         write-host "Script graphparm: $($GraphParam |ConvertTo-Json -Depth 5)"
 
         $CreateRequest = New-GraphPOSTRequest @GraphParam  -erroraction stop
-        Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter.defaultDomainName) -message "Added policy $($DisplayName) via template" -Sev 'info'
+        Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Added policy $($DisplayName) via template" -Sev 'info'
         if ($AssignTo -and $AssignTo -ne 'On') {
-            Write-Host "Assigning script to $($AssignTo) with ID $($CreateRequest.id) for tenant $($tenantFilter.defaultDomainName)"
+            Write-Host "Assigning script to $($AssignTo) with ID $($CreateRequest.id) for tenant $($tenantFilter)"
             Write-Host "ID is $($CreateRequest.id)"
             try {
                 Write-Host "Script ass: https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assign"
                 Set-CIPPAssignedPolicy -GroupName $AssignTo -PolicyId $CreateRequest.id -PlatformType $ScriptType -Type "Script" -baseuri "https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assign" -TenantFilter $tenantFilter.customerId -ExcludeGroup $ExcludeGroup -APIName $APINAME -Headers $Headers -errorAction Stop
-                Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter.defaultDomainName) -message "Successfully set assignment to $($AssignTo) for script $($DisplayName) via template" -Sev 'info'
+                Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Successfully set assignment to $($AssignTo) for script $($DisplayName) via template" -Sev 'info'
             }
             catch {
                 $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                Write-LogMessage -headers $Headers -API $APINAME -tenant $tenantFilter.defaultDomainName -message "Failed to assign intune script $($DisplayName)." -sev Error -LogData $ErrorMessage
+                Write-LogMessage -headers $Headers -API $APINAME -tenant $tenantFilter -message "Failed to assign intune script $($DisplayName)." -sev Error -LogData $ErrorMessage
                 throw "Failed to assign intune script $($DisplayName). Error: $ErrorMessage"
             }
         }
     }
     catch {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-        Write-LogMessage -headers $Headers -API $APINAME -tenant $tenantFilter.defaultDomainName -message "Failed to add intune script $($DisplayName)." -sev Error -LogData $ErrorMessage
-        throw "Failed to add intune script $($DisplayName). Error: $ErrorMessage"
+        Write-LogMessage -headers $Headers -API $APINAME -tenant $tenantFilter -message "Failed to add intune script $($DisplayName)." -sev Error -LogData $ErrorMessage
+        throw "$ErrorMessage"
     }
 }
