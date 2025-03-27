@@ -69,7 +69,7 @@ function Set-CIPPIntuneScript {
                 write-host "Script graphparm: $($GraphParam |ConvertTo-Json -Depth 5)"
                 if ($OverWrite) {
                     #$CreateRequest = New-GraphPOSTRequest @GraphParam -erroraction stop
-                    Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Updated policy $($DisplayName) to template defaults" -Sev 'info'
+
 
                     $GraphParam = @{
                         uri = "https://graph.microsoft.com/beta$TypeURL/$($CheckExististing.id)"
@@ -77,6 +77,7 @@ function Set-CIPPIntuneScript {
                         type = 'DELETE'
                     }
                     New-GraphPOSTRequest @GraphParam -erroraction stop
+                    Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Updated Script $($DisplayName) to template defaults" -Sev 'info'
 
                     #"Added Script $($Displayname) to tenant $($TenantName)"
                     ##Missing assignment function
@@ -99,7 +100,7 @@ function Set-CIPPIntuneScript {
         write-host "Script graphparm: $($GraphParam |ConvertTo-Json -Depth 5)"
 
         $CreateRequest = New-GraphPOSTRequest @GraphParam  -erroraction stop
-        Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Added policy $($DisplayName) via template" -Sev 'info'
+        Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Added Script $($DisplayName) via template" -Sev 'info'
         if ($AssignTo -and $AssignTo -ne 'On') {
             Write-Host "Assigning script to $($AssignTo) with ID $($CreateRequest.id) for tenant $($tenantFilter)"
             Write-Host "ID is $($CreateRequest.id)"
