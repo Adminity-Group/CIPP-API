@@ -107,6 +107,7 @@ function Set-CIPPIntuneScript {
                 Write-Host "Script ass: https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assign"
                 Set-CIPPAssignedPolicy -GroupName $AssignTo -PolicyId $CreateRequest.id -PlatformType $ScriptType -Type "Script" -baseuri "https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assign" -TenantFilter $tenantFilter -ExcludeGroup $ExcludeGroup -APIName $APINAME -Headers $Headers -errorAction Stop
                 Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Successfully set assignment to $($AssignTo) for script $($DisplayName) via template" -Sev 'info'
+
             }
             catch {
                 $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
@@ -114,6 +115,7 @@ function Set-CIPPIntuneScript {
                 throw "Failed to assign intune script $($DisplayName). Error: $ErrorMessage"
             }
         }
+        Return "Added Script $($Displayname) to tenant $($tenantFilter)"
     }
     catch {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
