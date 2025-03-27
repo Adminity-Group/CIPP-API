@@ -40,7 +40,6 @@ function Invoke-CIPPStandardScriptTemplate {
         $APINAME = 'Standards'
         write-host "Script standards: $($Settings | ConvertTo-Json)"
         write-host "Script standards: $($Tenant | ConvertTo-Json)"
-        $Tenant = $Tenant.addedFields
         $Table = Get-CippTable -tablename 'templates'
 
         foreach ($Setting in $Settings) {
@@ -55,7 +54,7 @@ function Invoke-CIPPStandardScriptTemplate {
                 $Setting.customGroup ? ($AssignTo = $Setting.customGroup) : $null
                 $RawJSON = $JSONObj.RAWJson
                 $Overwrite = $true
-                $ScriptType = $JSONObj.TemplateType
+                $ScriptType = $JSONObj.Type
 
 
                 $null = Set-CIPPIntuneScript -tenantFilter $Tenant -RawJSON $RawJSON -Overwrite $Overwrite -APIName $APIName -Headers $Request.Headers -AssignTo $AssignTo -ExcludeGroup $ExcludeGroup -ScriptType $ScriptType -Displayname $Displayname -Description $description -errorAction Stop
