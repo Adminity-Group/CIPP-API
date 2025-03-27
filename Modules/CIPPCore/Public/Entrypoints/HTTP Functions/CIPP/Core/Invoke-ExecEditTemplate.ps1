@@ -26,7 +26,15 @@ Function Invoke-ExecEditTemplate {
             $OriginalTemplate = ($OriginalTemplate.JSON | ConvertFrom-Json -Depth 100)
             $RawJSON = $OriginalTemplate.RAWJson
             Set-CIPPIntuneTemplate -RawJSON $RawJSON -GUID $GUID -DisplayName $Request.body.displayName -Description $Request.body.description -templateType $OriginalTemplate.Type -Headers $Request.Headers
-        } else {
+        }
+        elseif ($Type -eq 'ScriptTemplate'){
+            Write-Host 'Script Template'
+            $OriginalTemplate = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'ScriptTemplate' and RowKey eq '$GUID'"
+            $OriginalTemplate = ($OriginalTemplate.JSON | ConvertFrom-Json -Depth 100)
+            $RawJSON = $OriginalTemplate.RAWJson
+            Set-CIPPIntuneTemplate -RawJSON $RawJSON -GUID $GUID -DisplayName $Request.body.displayName -Description $Request.body.description -templateType $OriginalTemplate.Type -Headers $Request.Headers
+        }
+        else {
             $Table.Force = $true
 
             Add-CIPPAzDataTableEntity @Table -Entity @{
