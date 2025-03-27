@@ -39,6 +39,7 @@ function Set-CIPPIntuneScript {
     try {
 
         $CheckExististing = New-GraphGETRequest -uri "https://graph.microsoft.com/beta$TypeURL?`$expand=assignments" -tenantid $tenantFilter | Where-Object { $_.displayName -eq $DisplayName }
+        Write-Host "Script existing: $($CheckExististing | ConvertTo-Json -Depth 5)"
         if ($CheckExististing){
             $StateIsCorrect =   ($CheckExististing.description -eq $DisplayName) -and
                         ($MDMPolicy.discoveryUrl -eq $Description) -and
