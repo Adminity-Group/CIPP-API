@@ -53,7 +53,7 @@ function Set-CIPPIntuneScript {
 
                 # $GraphParam = @{
                 #     uri = "https://graph.microsoft.com/beta$TypeURL/$($CheckExististing.id)"
-                #     tenantid = $tenantFilter.customerId
+                #     tenantid = $tenantFilter
                 #     type = 'PATCH'
                 #     body = $RawJSON
                 # }
@@ -64,7 +64,7 @@ function Set-CIPPIntuneScript {
 
                     $GraphParam = @{
                         uri = "https://graph.microsoft.com/beta$TypeURL/$($CheckExististing.id)"
-                        tenantid = $tenantFilter.customerId
+                        tenantid = $tenantFilter
                         type = 'DELETE'
                     }
                     New-GraphPOSTRequest @GraphParam -erroraction stop
@@ -83,7 +83,7 @@ function Set-CIPPIntuneScript {
         $RawJSON = ConvertTo-Json -InputObject ($JSONObj | Select-Object * -ExcludeProperty *assignments*) -Depth 10 -Compress
         $GraphParam = @{
             uri = "https://graph.microsoft.com/beta$TypeURL"
-            tenantid = $tenantFilter.customerId
+            tenantid = $tenantFilter
             type = 'POST'
             body = $RawJSON
         }
@@ -96,7 +96,7 @@ function Set-CIPPIntuneScript {
             Write-Host "ID is $($CreateRequest.id)"
             try {
                 Write-Host "Script ass: https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assign"
-                Set-CIPPAssignedPolicy -GroupName $AssignTo -PolicyId $CreateRequest.id -PlatformType $ScriptType -Type "Script" -baseuri "https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assign" -TenantFilter $tenantFilter.customerId -ExcludeGroup $ExcludeGroup -APIName $APINAME -Headers $Headers -errorAction Stop
+                Set-CIPPAssignedPolicy -GroupName $AssignTo -PolicyId $CreateRequest.id -PlatformType $ScriptType -Type "Script" -baseuri "https://graph.microsoft.com/beta$TypeURL/$($CreateRequest.id)/assign" -TenantFilter $tenantFilter -ExcludeGroup $ExcludeGroup -APIName $APINAME -Headers $Headers -errorAction Stop
                 Write-LogMessage -headers $Headers -API $APINAME -tenant $($tenantFilter) -message "Successfully set assignment to $($AssignTo) for script $($DisplayName) via template" -Sev 'info'
             }
             catch {
@@ -109,7 +109,7 @@ function Set-CIPPIntuneScript {
     catch {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
         Write-LogMessage -headers $Headers -API $APINAME -tenant $tenantFilter -message "Failed to add intune script $($DisplayName)." -sev Error -LogData $ErrorMessage
-        write-host "Script Error: $($_.Exception)"
+        write-host "Script Error: $($_.Exception | ConvertTo-Json -Depth 5)"
         throw "$ErrorMessage"
     }
 }
