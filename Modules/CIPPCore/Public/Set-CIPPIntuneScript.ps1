@@ -31,9 +31,11 @@ function Set-CIPPIntuneScript {
             "url"    = '/deviceManagement/configurationPolicies'
         }
     )
-    $Type = ($ScriptInfo | Where-Object { $_.ScriptType -eq $scriptType })
+    $Type = ($ScriptInfo | Where-Object { $_.ScriptType -eq $ScriptType })
+    write-host "Script type: $($Type | ConvertTo-Json -Depth 5)"
     $TypeURL = $Type.url
     if (!$TypeURL){
+        write-host "Script Error: Script type $ScriptType not found or invaild"
         throw "Script type $ScriptType not found or invaild"
     }
 
@@ -44,7 +46,7 @@ function Set-CIPPIntuneScript {
 
     try {
 
-        $CheckExististing = New-GraphGETRequest -uri "https://graph.microsoft.com/beta$TypeURL?`$expand=assignments" -tenantid $tenantFilter | Where-Object { $_.displayName -eq $DisplayName }
+        $CheckExististing = New-GraphGETRequest -uri "https://graph.microsoft.com/beta$($TypeURL)?`$expand=assignments" -tenantid $tenantFilter | Where-Object { $_.displayName -eq $DisplayName }
         Write-Host "Script existing: $($CheckExististing | ConvertTo-Json -Depth 5)"
         if ($CheckExististing){
             $StateIsCorrect =   ($CheckExististing.description -eq $DisplayName) -and
