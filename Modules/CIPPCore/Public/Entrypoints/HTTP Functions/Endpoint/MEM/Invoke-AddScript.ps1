@@ -32,7 +32,6 @@ Function Invoke-AddScript {
             try {
                 Write-Host 'Calling Adding Script'
                 Set-CIPPIntuneScript -tenantFilter $Tenant -RawJSON $RawJSON -Overwrite $Overwrite -APIName $APIName -Headers $Request.Headers -AssignTo $AssignTo -ExcludeGroup $ExcludeGroup -ScriptType $ScriptType -Displayname $Displayname -Description $description -errorAction Stop
-                "Added Script $($Displayname) to tenant $($TenantName)"
                 Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $TenantName -message "Added policy $($Displayname)" -Sev 'Info'
             } catch {
                 "Failed to add script $($Displayname) to tenant $($TenantName). $($_.Exception.Message)"
