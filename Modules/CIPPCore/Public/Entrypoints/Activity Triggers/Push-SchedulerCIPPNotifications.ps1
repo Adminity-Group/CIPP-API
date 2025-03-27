@@ -71,7 +71,7 @@ function Push-SchedulerCIPPNotifications {
     try {
         Write-Information $($config | ConvertTo-Json)
         Write-Information $config.webhook
-        if ($Config.webhook -ne '' -and $null) {
+        if ($Config.webhook -ne '' -or $null) {
             if ($Currentlog) {
                 $JSONContent = $Currentlog | ConvertTo-Json -Compress
                 Send-CIPPAlert -Type 'webhook' -JSONContent $JSONContent -TenantFilter $Tenant -APIName 'Alerts'
