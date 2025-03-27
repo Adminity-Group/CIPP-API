@@ -33,6 +33,9 @@ function Set-CIPPIntuneScript {
     )
     $Type = ($ScriptInfo | Where-Object { $_.ScriptType -eq $scriptType })
     $TypeURL = $Type.url
+    if (!$TypeURL){
+        throw "Script type $ScriptType not found or invaild"
+    }
 
     $JSONObj = $RawJSON | ConvertFrom-Json | Select-Object * -ExcludeProperty "@odata.context", id,createdDateTime,lastModifiedDateTime
 
