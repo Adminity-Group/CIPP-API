@@ -41,15 +41,25 @@ function Invoke-CIPPStandardScriptTemplate {
         write-host "Script standards: $($Settings | ConvertTo-Json)"
         write-host "Script standards: $($Tenant | ConvertTo-Json)"
         $Tenant = $Tenant.addedFields
+        $Table = Get-CippTable -tablename 'templates'
 
         foreach ($Setting in $Settings) {
             try {
-
-                $Table = Get-CippTable -tablename 'templates'
                 $Filter = "PartitionKey eq 'ScriptTemplates' and RowKey eq '$($Setting.TemplateList.value)'"
-                $JSONObj = (Get-CippAzDataTableEntity @Table -Filter $Filter).JSON
+                $JSONObj = (Get-CippAzDataTableEntity @Table -Filter $Filter).JSON | ConvertFrom-Json
 
-                $null = Set-CIPPIntuneScript -tenantFilter $Tenant -RawJSON $JSONObj -Overwrite $true -APIName $APIName -Headers $Request.Headers -AssignTo $Setting.AssignTo -ExcludeGroup $Setting.excludeGroup
+                $displayname = $JSONObj.displayName
+                $description = $JSONObj.Description
+                $AssignTo = if ($Setting.AssignTo -ne 'on') { $Setting.AssignTo }
+                $ExcludeGroup = $Setting.excludeGroup
+                $Setting.customGroup ? ($AssignTo = $Setting.customGroup) : $null
+                $RawJSON = $JSONObj.RAWJson
+                $Overwrite = $true
+                $ScriptType = $JSONObj.TemplateType
+
+
+                $null = Set-CIPPIntuneScript -tenantFilter $Tenant -RawJSON $RawJSON -Overwrite $Overwrite -APIName $APIName -Headers $Request.Headers -AssignTo $AssignTo -ExcludeGroup $ExcludeGroup -ScriptType $ScriptType -Displayname $Displayname -Description $description -errorAction Stop
+
 
             } catch {
                 $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
