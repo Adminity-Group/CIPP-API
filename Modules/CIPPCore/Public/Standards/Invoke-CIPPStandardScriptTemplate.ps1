@@ -38,6 +38,9 @@ function Invoke-CIPPStandardScriptTemplate {
     If ($Settings.remediate -eq $true) {
 
         $APINAME = 'Standards'
+        write-host "Script standards: $($Settings | ConvertTo-Json)"
+        write-host "Script standards: $($Tenant | ConvertTo-Json)"
+        $Tenant = $Tenant.addedFields
 
         foreach ($Setting in $Settings) {
             try {
