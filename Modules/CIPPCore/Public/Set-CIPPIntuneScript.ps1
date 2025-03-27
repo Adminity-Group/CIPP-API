@@ -38,6 +38,9 @@ function Set-CIPPIntuneScript {
     }
 
     $JSONObj = $RawJSON | ConvertFrom-Json | Select-Object * -ExcludeProperty "@odata.context", id,createdDateTime,lastModifiedDateTime
+    Write-Host "Script JSON: $($JSONObj | ConvertTo-Json -Depth 5)"
+    Write-Host "Script URL: https://graph.microsoft.com/beta$TypeURL?`$expand=assignments"
+    Write-Host "Script tenantfilter: $tenantFilter"
 
     try {
 
