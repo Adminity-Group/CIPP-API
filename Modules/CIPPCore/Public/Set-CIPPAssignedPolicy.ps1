@@ -98,12 +98,18 @@ function Set-CIPPAssignedPolicy {
             }
         }
 
+        switch ($Type) {
+            'Script' { $assignmentsName = 'deviceManagementScriptAssignments' }
+            Default { $assignmentsName = 'assignments' }
+        }
+
         $assignmentsObject = [PSCustomObject]@{
-            assignments = $assignmentsList
+            $assignmentsName = $assignmentsList
         }
 
         $AssignJSON = $assignmentsObject | ConvertTo-Json -Depth 10 -Compress
         Write-Host "AssignJSON: $AssignJSON"
+        Write-Host "Script AssignJSON: $BaseUri"
         if ($PSCmdlet.ShouldProcess($GroupName, "Assigning policy $PolicyId")) {
             $uri = $BaseUri ?? "https://graph.microsoft.com/beta/$($PlatformType)/$Type('$($PolicyId)')/assign"
             $null = New-GraphPOSTRequest -uri $uri -tenantid $TenantFilter -type POST -body $AssignJSON
