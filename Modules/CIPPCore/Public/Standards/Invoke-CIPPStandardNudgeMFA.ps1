@@ -48,6 +48,7 @@ function Invoke-CIPPStandardNudgeMFA {
     if ($Settings.remediate -eq $true) {
         $StateName = $Settings.state ? 'Enabled' : 'Disabled'
         try {
+
             $GraphRequest = @{
                 tenantid    = $Tenant
                 uri         = 'https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy'
@@ -66,6 +67,7 @@ function Invoke-CIPPStandardNudgeMFA {
                     }
                 } | ConvertTo-Json -Depth 10 -Compress
             }
+            Write-Host "NudgeMFA Request: $($GraphRequest)"
             New-GraphPostRequest @GraphRequest
             Write-LogMessage -API 'Standards' -tenant $Tenant -message "$StateName Authenticator App Nudge with a snooze duration of $($Settings.snoozeDurationInDays)" -sev Info
         } catch {
