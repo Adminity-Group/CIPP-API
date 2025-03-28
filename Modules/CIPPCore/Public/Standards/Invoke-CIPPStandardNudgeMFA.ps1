@@ -67,7 +67,7 @@ function Invoke-CIPPStandardNudgeMFA {
                     }
                 } | ConvertTo-Json -Depth 10 -Compress
             }
-            Write-Host "NudgeMFA Request: $($GraphRequest)"
+            Write-Host "NudgeMFA Request: $($GraphRequest | ConvertTo-Json -Depth 5)"
             New-GraphPostRequest @GraphRequest
             Write-LogMessage -API 'Standards' -tenant $Tenant -message "$StateName Authenticator App Nudge with a snooze duration of $($Settings.snoozeDurationInDays)" -sev Info
         } catch {
