@@ -35,11 +35,46 @@ function Invoke-CIPPStandardNudgeMFA {
     # Get state value using null-coalescing operator
     $state = $Settings.state.value ?? $Settings.state
 
+    $ExcludeList = New-Object System.Collections.Generic.List[System.Object]
+
+    if ($Settings.excludeGroup){
+        Write-Host "NudgeMFA: We're supposed to exclude a custom group. The group is $($Settings.excludeGroup)"
+        try {
+            $GroupNames = $Settings.excludeGroup.Split(',').Trim()
+            $GroupIds = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName&$top=999' -tenantid $TenantFilter |
+                ForEach-Object {
+                    foreach ($SingleName in $GroupNames) {
+                        if ($_.displayName -like $SingleName) {
+                            $_.id
+                        }
+                    }
+                }
+            foreach ($gid in $GroupIds) {
+                $ExcludeList.Add(
+                    [PSCustomObject]@{
+                        id = $gid
+                        targetType = "group"
+                    }
+                )
+            }
+            if (!$ExcludeList.id.count -eq $GroupNames.count){
+                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Unable to find exclude group $GroupNames in tenant" -sev Error -LogData (Get-CippException -Exception $_)
+                exit 0
+            }
+        }
+        catch {
+            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to find exclude group $GroupNames in tenant" -sev Error -LogData (Get-CippException -Exception $_)
+            exit 0
+        }
+    }
+
+
     try {
         $CurrentState = New-GraphGetRequest -Uri 'https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy' -tenantid $Tenant
         $StateIsCorrect = ($CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.state -eq $state) -and
                         ($CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.snoozeDurationInDays -eq $Settings.snoozeDurationInDays) -and
-                        ($CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.enforceRegistrationAfterAllowedSnoozes -eq $true)
+                        ($CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.enforceRegistrationAfterAllowedSnoozes -eq $true) -and
+                        ($ExcludeList.id -in $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.excludeTargets.id)
     } catch {
         Write-LogMessage -API 'Standards' -tenant $Tenant -message 'Failed to get Authenticator App Nudge state, check your permissions and try again' -sev Error -LogData (Get-CippException -Exception $_)
         exit 0
@@ -54,9 +89,10 @@ function Invoke-CIPPStandardNudgeMFA {
             }
         )
 
+        $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.excludeTargets | ForEach-Object {$ExcludeList.add($_)}
+
         $StateName = $Settings.state ? 'Enabled' : 'Disabled'
         try {
-
             $GraphRequest = @{
                 tenantid    = $Tenant
                 uri         = 'https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy'
@@ -70,7 +106,7 @@ function Invoke-CIPPStandardNudgeMFA {
                             snoozeDurationInDays                   = $Settings.snoozeDurationInDays
                             enforceRegistrationAfterAllowedSnoozes = $true
                             includeTargets                         = ($CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.includeTargets.Count -gt 0) ? $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.includeTargets : $defaultIncludeTargets
-                            excludeTargets                         = $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.excludeTargets
+                            excludeTargets                         = $ExcludeList
                         }
                     }
                 } | ConvertTo-Json -Depth 10 -Compress
