@@ -69,7 +69,7 @@ function Invoke-CIPPStandardNudgeMFA {
                             state                                  = $state
                             snoozeDurationInDays                   = $Settings.snoozeDurationInDays
                             enforceRegistrationAfterAllowedSnoozes = $true
-                            includeTargets                         = $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.includeTargets ?? $defaultIncludeTargets
+                            includeTargets                         = ($CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.includeTargets.Count -gt 0) ? $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.includeTargets : $defaultIncludeTargets
                             excludeTargets                         = $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.excludeTargets
                         }
                     }
@@ -98,15 +98,3 @@ function Invoke-CIPPStandardNudgeMFA {
         Add-CIPPBPAField -FieldName 'NudgeMFA' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $Tenant
     }
 }
-
-
-$t = @"
-{
-"uri": "https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy",
-"tenantid": "schjeldal.dk",
-"Type": "PATCH",
-"AsApp": false,
-"Body": "{\"registrationEnforcement\":{\"authenticationMethodsRegistrationCampaign\":{\"excludeTargets\":[],\"state\":\"enabled\",\"includeTargets\":[{\"id\":\"all_users\",\"targetType\":\"group\",\"targetedAuthenticationMethod\":\"microsoftAuthenticator\"}],\"snoozeDurationInDays\":\"7\",\"enforceRegistrationAfterAllowedSnoozes\":true}}}",
-"ContentType": "application/json"
-}
-"@ | Convertfrom-Json
