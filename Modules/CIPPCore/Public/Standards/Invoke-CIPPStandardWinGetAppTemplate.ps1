@@ -41,7 +41,7 @@ function Invoke-CIPPStandardWinGetAppTemplate
     If ($true -in $Settings.remediate) {
         Write-Host 'WinGet: starting template deploy'
         foreach ($app in $Settings) {
-            Write-Host "WinGet: working on WinGet deploy: $($app.displayname) $($app.AppID)"
+            Write-Host "WinGet: working on WinGet deploy: $($app.displayName) $($app.AppID)"
 
             try {
                 $currentApp = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/deviceAppManagement/mobileApps?`$filter=(isof(%27microsoft.graph.winGetApp%27))" -tenantid $Tenant | Where-Object { $_.packageIdentifier -eq $app.AppID }
@@ -70,7 +70,7 @@ function Invoke-CIPPStandardWinGetAppTemplate
                             $CompleteObject = [PSCustomObject]@{
                                 tenant             = $tenant
                                 Applicationname    = $DataRequest.Versions.DefaultLocale.PackageName
-                                assignTo           = $assignTo
+                                assignTo           = $app.assignTo
                                 InstallationIntent = $false
                                 type               = 'WinGet'
                                 IntuneBody         = $WinGetData
@@ -85,9 +85,9 @@ function Invoke-CIPPStandardWinGetAppTemplate
                                 status       = 'Not Deployed yet'
                             }
                             "Successfully added Store App for $($Tenant) to queue."
-                            Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $tenant -message "Successfully added Store App $($app.Displayname) to queue" -Sev 'Info'
+                            Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $tenant -message "Successfully added Store App $($app.displayName) to queue" -Sev 'Info'
                         } catch {
-                            Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $tenant -message "Failed to add Store App $($app.Displayname) to queue" -Sev 'Error'
+                            Write-LogMessage -headers $Request.Headers -API $APINAME -tenant $tenant -message "Failed to add Store App $($app.displayName) to queue" -Sev 'Error'
                             "Failed added Store App for $($Tenant) to queue"
                         }
                     }
@@ -106,3 +106,8 @@ function Invoke-CIPPStandardWinGetAppTemplate
 
     }
 }
+
+
+$t = @"
+{"Tenant":"schjeldal.dk","Standard":"WinGetAppTemplate","Settings":{"AppID":"9WZDNCRFJ3PZ","displayName":"Company Portal","AssignTo":"allLicensedUsers","customGroup":"","excludeGroup":"","remediate":true,"alert":false,"report":false},"QueueId":"edcc6de3-cd37-4b7a-ba27-2a784556bd23","templateId":"02429978-7fa7-4a61-a230-72a162eda988","QueueName":"WinGetAppTemplate - schjeldal.dk","FunctionName":"CIPPStandard"}
+"@ | ConvertFrom-Json
