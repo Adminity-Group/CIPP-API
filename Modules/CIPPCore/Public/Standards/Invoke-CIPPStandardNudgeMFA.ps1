@@ -42,6 +42,7 @@ function Invoke-CIPPStandardNudgeMFA {
         try {
             $GroupNames = $Settings.excludeGroup.Split(',').Trim()
             $TenantGroups = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName&$top=999' -tenantid $Tenant
+            Write-Host "NudgeMFA: $($TenantGroups | ConvertTo-Json -Depth 5)"
             $GroupIds = $TenantGroups |
                 ForEach-Object {
                     foreach ($SingleName in $GroupNames) {
@@ -52,6 +53,7 @@ function Invoke-CIPPStandardNudgeMFA {
                         }
                     }
                 }
+            Write-Host "NudgeMFA: $($GroupIds | ConvertTo-Json -Depth 5)"
             foreach ($gid in $GroupIds) {
                 $ExcludeList.Add(
                     [PSCustomObject]@{
@@ -60,6 +62,10 @@ function Invoke-CIPPStandardNudgeMFA {
                     }
                 )
             }
+            Write-Host "NudgeMFA: $($ExcludeList | ConvertTo-Json -Depth 5)"
+            Write-Host "NudgeMFA: ExcludeList.id.count $($ExcludeList.id.count)"
+            Write-Host "NudgeMFA: GroupNames.count $($GroupNames.count)"
+
             if (!($ExcludeList.id.count -eq $GroupNames.count)){
                 Write-LogMessage -API 'Standards' -tenant $Tenant -message "Unable to find exclude group $GroupNames in tenant" -sev Error
                 exit 0
