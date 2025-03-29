@@ -84,6 +84,10 @@ function Invoke-CIPPStandardNudgeMFA {
     }
 
     if ($Settings.remediate -eq $true) {
+        if ($StateIsCorrect -eq $true) {
+            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Authenticator App Nudge is already set to $state and other settings is also correct" -sev Info
+            return
+        }
         $defaultIncludeTargets = @(
             @{
                 id = 'all_users'
