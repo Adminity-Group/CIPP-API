@@ -44,7 +44,7 @@ function Invoke-CIPPStandardWinGetAppTemplate
             Write-Host "WinGet: working on WinGet deploy: $($app.displayname) $($app.AppID)"
 
             try {
-                $currentApp = get-cippgraphrequest -uri "https://graph.microsoft.com/beta/deviceAppManagement/mobileApps?`$filter=(isof(%27microsoft.graph.winGetApp%27))" -tenantid $Tenant | Where-Object { $_.packageIdentifier -eq $app.AppID }
+                $currentApp = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/deviceAppManagement/mobileApps?`$filter=(isof(%27microsoft.graph.winGetApp%27))" -tenantid $Tenant | Where-Object { $_.packageIdentifier -eq $app.AppID }
                 if ($currentApp) {
                     Write-Host "WinGet: found existing app with id $($app.AppID)"
                     Write-LogMessage -API $APIName -tenant $tenant -message "Found existing app $($app.displayname) with id $($app.AppID)" -sev 'info'
@@ -100,7 +100,7 @@ function Invoke-CIPPStandardWinGetAppTemplate
 
             } catch {
                 $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                Write-LogMessage -API $APIName -tenant $tenant -message "Failed to create or update Intune Template $PolicyName, Error: $ErrorMessage" -sev 'Error'
+                Write-LogMessage -API $APIName -tenant $tenant -message "Failed add WinGet App $($app.displayname) $($app.AppID), Error: $ErrorMessage" -sev 'Error'
             }
         }
 
