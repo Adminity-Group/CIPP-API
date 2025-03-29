@@ -49,6 +49,7 @@ function Invoke-CIPPStandardNudgeMFA {
                         }
                     }
                 }
+            write-host "NudgeMFA: GroupIds: $($GroupIds | ConvertTo-Json)"
             foreach ($gid in $GroupIds) {
                 $ExcludeList.Add(
                     [PSCustomObject]@{
@@ -57,8 +58,9 @@ function Invoke-CIPPStandardNudgeMFA {
                     }
                 )
             }
-            if (!$ExcludeList.id.count -eq $GroupNames.count){
-                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Unable to find exclude group $GroupNames in tenant" -sev Error -LogData (Get-CippException -Exception $_)
+            write-host "NudgeMFA: ExcludeList: $($ExcludeList | ConvertTo-Json)"
+            if (!($ExcludeList.id.count -eq $GroupNames.count)){
+                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Unable to find exclude group $GroupNames in tenant" -sev Error
                 exit 0
             }
         }
