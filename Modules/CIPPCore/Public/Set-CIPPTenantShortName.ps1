@@ -28,7 +28,7 @@ Function Set-CIPPTenantShortName {
     }
 
     try {
-        $Table = Get-CippTable -tablename 'CippReplacemap'
+        $Table = Get-CippTable -tablename 'TenantProperties'
 
         $VariableName = "shortName"
         $VariableValue = $Shortname
