@@ -15,6 +15,7 @@ Function Invoke-ExecExcludeTenant {
     $username = $Request.Headers.'x-ms-client-principal-name'
     $date = (Get-Date).tostring('yyyy-MM-dd')
     $TenantsTable = Get-CippTable -tablename Tenants
+    $tenantPropertiesTable = Get-CippTable -tablename 'TenantProperties'
 
     if ($Request.Query.List) {
         $ExcludedFilter = "PartitionKey eq 'Tenants' and Excluded eq true"
@@ -23,6 +24,16 @@ Function Invoke-ExecExcludeTenant {
         $body = @($ExcludedTenants)
     } elseif ($Request.query.ListAll) {
         $ExcludedTenants = Get-CIPPAzDataTableEntity @TenantsTable -filter "PartitionKey eq 'Tenants'" | Sort-Object -Property displayName
+        $TenantsShortname = Get-CIPPAzDataTableEntity @tenantPropertiesTable -filter "RowKey eq 'Shortname'"
+        $ExcludedTenants = $ExcludedTenants | ForEach-Object {
+            foreach ($Shortname in $TenantsShortname) {
+                if ($Shortname.PartitionKey -eq $_.customerId){
+                    $_ | Add-Member -MemberType NoteProperty -Name shortName -Value $Shortname.Value
+                }
+            }
+            $_
+        }
+
         Write-LogMessage -API $APINAME -headers $Request.Headers -message 'got excluded tenants list' -Sev 'Debug'
         $body = @($ExcludedTenants)
     }
