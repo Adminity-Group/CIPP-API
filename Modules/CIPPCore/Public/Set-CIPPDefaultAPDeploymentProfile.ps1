@@ -23,14 +23,16 @@ function Set-CIPPDefaultAPDeploymentProfile {
 
     try {
         If ($DeviceNameTemplate -like "*#SHORTNAME#*") {
-            $Table = Get-CippTable -tablename 'TenantProperties'
-            $Tenant = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'Tenants' and defaultDomainName eq '$($tenantfilter)'" -Property RowKey, PartitionKey, customerId, displayName, defaultDomainName
+            $TableProperties = Get-CippTable -tablename 'TenantProperties'
+            $TableTenants = Get-CippTable -tablename 'Tenants'
+
+            $Tenant = Get-CIPPAzDataTableEntity @TableTenants -Filter "PartitionKey eq 'Tenants' and defaultDomainName eq '$($tenantfilter)'" -Property RowKey, PartitionKey, customerId, displayName, defaultDomainName
 
 
-            $Shortname = (Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '$($tenant.customerId)' and RowKey eq 'Shortname'").Value
+            $Shortname = (Get-CIPPAzDataTableEntity @TableProperties -Filter "PartitionKey eq '$($tenant.customerId)' and RowKey eq 'Shortname'").Value
 
             if (!$Shortname) {
-                Write-LogMessage -Headers $User -API $APIName -tenant $($tenantfilter) -message "Failed $($Type)ing Autopilot Profile $($Displayname). Error: Tenant ShortName is not set for $($Tenant.defaultDomainName)" -Sev 'Error'
+                Write-LogMessage -Headers $User -API $APIName -tenant $($tenantfilter) -message "Failed adding Autopilot Profile $($Displayname). Error: Tenant ShortName is not set for $($Tenant.defaultDomainName)" -Sev 'Error'
                 throw "Tenant ShortName is not set for $($tenantFilter)"
                 return
             }
