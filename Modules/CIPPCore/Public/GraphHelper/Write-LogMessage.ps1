@@ -38,8 +38,22 @@ function Write-LogMessage {
     if ($LogData) { $LogData = ConvertTo-Json -InputObject $LogData -Depth 10 -Compress }
 
     $Table = Get-CIPPTable -tablename CippLogs
+    $TenantsTable = Get-CIPPTable -tablename "Tenants"
 
     if (!$tenant) { $tenant = 'None' }
+    else {
+        if ($tenant -match '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'){
+            $filter = "PartitionKey eq 'Tenants' and RowKey eq '$tenant'"
+
+        }
+        else {
+            $filter = "PartitionKey eq 'Tenants' and RowKey eq '$defaultDomainName'"
+        }
+        $Search = Get-CIPPAzDataTableEntity @TenantsTable -Filter $filter
+        $tenant = $Search.defaultDomainName ?? "NotFound"
+        $tenantId = $Search.customerId
+    }
+
     if (!$username) { $username = 'CIPP' }
     if ($sev -eq 'Debug' -and $env:DebugMode -ne $true) {
         return
