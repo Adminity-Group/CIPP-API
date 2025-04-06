@@ -50,7 +50,7 @@ function Write-LogMessage {
             $filter = "PartitionKey eq 'Tenants' and defaultDomainName eq '$tenant'"
         }
         $Search = Get-CIPPAzDataTableEntity @TenantsTable -Filter $filter
-        $tenant = $Search.defaultDomainName ?? "NotFound"
+        $tenant = $Search.defaultDomainName ?? $tenant
         $tenantId = $Search.customerId
     }
 
