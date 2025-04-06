@@ -81,7 +81,7 @@ Function Invoke-EditTenant {
 
         # Remove any groups that are no longer selected
         foreach ($Group in $CurrentMembers) {
-            if ($tenantGroups -notcontains $Group.GroupId) {
+            if ($tenantGroups.groupId -notcontains $Group.GroupId) {
                 Remove-AzDataTableEntity @GroupMembersTable -Entity $Group
             }
         }
