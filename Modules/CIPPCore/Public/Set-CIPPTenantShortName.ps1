@@ -1,4 +1,4 @@
-Function Invoke-ExecSetTenantShortName {
+Function Set-CIPPTenantShortName {
     <#
     .FUNCTIONALITY
         Entrypoint
