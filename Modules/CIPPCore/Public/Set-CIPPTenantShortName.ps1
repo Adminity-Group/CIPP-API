@@ -20,7 +20,6 @@ Function Set-CIPPTenantShortName {
         throw "Shortname is required"
     }
 
-    $customerId = $Request.Query.customerId ?? $Request.Body.customerId
     $regex = '^(?![0-9]+$)(?!.*\s)[a-zA-Z0-9-]{1,6}$'
 
     if ($Shortname -notmatch $regex) {

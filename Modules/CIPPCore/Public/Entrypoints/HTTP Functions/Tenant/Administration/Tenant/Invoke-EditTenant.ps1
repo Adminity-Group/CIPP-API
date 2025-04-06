@@ -35,15 +35,13 @@ Function Invoke-EditTenant {
 
             }
             catch {
-                $response = @{
-                    state      = 'error'
-                    resultText = $_.Exception.Message
-                }
+                $body = [pscustomobject]@{'Results' = "Failed. $($_.Exception.Message)" }
+                # Associate values to output bindings by calling 'Push-OutputBinding'.
                 Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
-                        StatusCode = [HttpStatusCode]::BadRequest
-                        Body       = $response
-                    })
-                return
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = $body
+                })
+                exit
             }
         }
 
