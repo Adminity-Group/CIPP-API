@@ -18,6 +18,9 @@ Function Invoke-EditTenant {
     $tenantAlias = $Request.Body.tenantAlias
     $tenantGroups = $Request.Body.tenantGroups
 
+    #NgMS
+    $tenantShortname = $Request.Body.tenantShortname
+
     $PropertiesTable = Get-CippTable -TableName 'TenantProperties'
     $Existing = Get-CIPPAzDataTableEntity @PropertiesTable -Filter "PartitionKey eq '$customerId'"
     $Tenant = Get-Tenants -TenantFilter $customerId
@@ -25,6 +28,30 @@ Function Invoke-EditTenant {
     $GroupMembersTable = Get-CippTable -TableName 'TenantGroupMembers'
 
     try {
+
+        if ($tenantShortname) {
+
+            $regex = '^(?![0-9]+$)(?!.*\s)[a-zA-Z0-9-]{1,6}$'
+            if ($tenantShortname -notmatch $regex) {
+                Write-LogMessage -API $APINAME -tenant $customerId -headers $Request.Headers -message "Failed to set Tenant ShortName '$($tenantShortname)' for customer $customerId. Error: ShortName must be 6 characters or less, and can contain letters (a-z, A-Z), numbers (0-9), and hyphens. Names must not contain only numbers. Names cannot include a blank space" -Sev 'Error'
+                Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+                    StatusCode = [HttpStatusCode]::BadRequest
+                    Body       = 'Validation Failed: ShortName must be 6 characters or less, and can contain letters (a-z, A-Z), numbers (0-9), and hyphens. Names must not contain only numbers. Names cannot include a blank space'
+                })
+                return
+            }
+
+
+            $ShortnameEntity = @{
+                PartitionKey = $customerId
+                RowKey       = 'Shortname'
+                Value        = $tenantShortname
+            }
+            $null = Add-CIPPAzDataTableEntity @PropertiesTable -Entity $ShortnameEntity -Force
+            Write-LogMessage -API $APINAME -tenant $customerId -headers $Request.Headers -message "Set Tenant ShortName '$($tenantShortname)' for customer $customerId" -Sev 'Info'
+
+        }
+
         $AliasEntity = $Existing | Where-Object { $_.RowKey -eq 'Alias' }
         if (!$tenantAlias) {
             if ($AliasEntity) {
