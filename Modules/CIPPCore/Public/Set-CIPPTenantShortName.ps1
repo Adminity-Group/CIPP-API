@@ -30,7 +30,7 @@ Function Set-CIPPTenantShortName {
     try {
         $Table = Get-CippTable -tablename 'TenantProperties'
 
-        $VariableName = "shortName"
+        $VariableName = "Shortname"
         $VariableValue = $Shortname
         $VariableEntity = @{
             PartitionKey = $customerId
