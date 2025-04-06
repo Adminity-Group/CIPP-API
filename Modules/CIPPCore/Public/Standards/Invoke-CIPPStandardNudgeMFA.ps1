@@ -102,7 +102,11 @@ function Invoke-CIPPStandardNudgeMFA {
             }
         )
 
-        $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.excludeTargets | ForEach-Object {$ExcludeList.add($_)}
+        $CurrentState.registrationEnforcement.authenticationMethodsRegistrationCampaign.excludeTargets | ForEach-Object {
+            if ($_.id -notin $ExcludeList.id) {
+                $ExcludeList.add($_)
+            }
+        }
 
         $StateName = $Settings.state ? 'Enabled' : 'Disabled'
         try {
