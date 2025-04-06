@@ -23,17 +23,21 @@ function Set-CIPPDefaultAPDeploymentProfile {
 
     try {
         If ($DeviceNameTemplate -like "*#SHORTNAME#*") {
-            $Table = Get-CippTable -tablename 'Tenants'
-            $Tenant = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'Tenants' and defaultDomainName eq '$($tenantfilter)'" -Property RowKey, PartitionKey, customerId, displayName, shortName, defaultDomainName
-            if (!$Tenant.ShortName) {
+            $Table = Get-CippTable -tablename 'TenantProperties'
+            $Tenant = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'Tenants' and defaultDomainName eq '$($tenantfilter)'" -Property RowKey, PartitionKey, customerId, displayName, defaultDomainName
+
+
+            $Shortname = (Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '$($tenant.customerId)' and RowKey eq 'Shortname'").Value
+
+            if (!$Shortname) {
                 Write-LogMessage -Headers $User -API $APIName -tenant $($tenantfilter) -message "Failed $($Type)ing Autopilot Profile $($Displayname). Error: Tenant ShortName is not set for $($Tenant.defaultDomainName)" -Sev 'Error'
                 throw "Tenant ShortName is not set for $($tenantFilter)"
                 return
             }
-            Write-Host "WAP: shortname $($Tenant.ShortName)"
+            Write-Host "WAP: shortname $($Shortname)"
             #Write-Host "WAP: Org devTemplate $($DeviceNameTemplate)"
             #Write-Host "WAP: Org devTemplate Type $($DeviceNameTemplate.gettype())"
-            $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $Tenant.ShortName
+            $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $Shortname
             #Write-Host "WAP: New devTemplate $($DeviceNameTemplate)"
         }
         $ObjBody = [pscustomobject]@{
