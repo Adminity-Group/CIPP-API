@@ -61,7 +61,7 @@ Function Invoke-ListIntunePolicy {
                 @{
                     id     = 'MobileAppConfigurations'
                     method = 'GET'
-                    url    = "/deviceAppManagement/mobileAppConfigurations?`$expand=assignments&`$filter=microsoft.graph.androidManagedStoreAppConfiguration/appSupportsOemConfig%20eq%20true"
+                    url    = "deviceAppManagement/mobileAppConfigurations?`$expand=assignments&`$filter=microsoft.graph.androidManagedStoreAppConfiguration/appSupportsOemConfig eq false or isof('microsoft.graph.androidManagedStoreAppConfiguration') eq false&`$top=500"
                 }
                 @{
                     id     = 'ConfigurationPolicies'
@@ -87,6 +87,7 @@ Function Invoke-ListIntunePolicy {
                         '*microsoft.graph.macOSGeneralDeviceConfiguration*' { 'MacOS Configuration' }
                         '*microsoft.graph.macOSEndpointProtectionConfiguration*' { 'MacOS Endpoint Protection' }
                         '*microsoft.graph.androidWorkProfileGeneralDeviceConfiguration*' { 'Android Configuration' }
+                        '*microsoft.graph.iosMobileAppConfiguration*' { 'iOS App Configuration' }
                         '*windowsFeatureUpdateProfiles*' { 'Feature Update' }
                         '*windowsQualityUpdatePolicies*' { 'Quality Update' }
                         '*windowsQualityUpdateProfiles*' { 'Quality Update' }
