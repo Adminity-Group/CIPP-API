@@ -87,9 +87,9 @@ function Push-SchedulerCIPPNotifications {
             }
 
             if ($CurrentStandardsLogs) {
-                $JSONContent = New-CIPPAlertTemplate -Data $Data -Format 'json' -InputObject 'table'
-                $CurrentStandardsLogs | ConvertTo-Json -Compress
-                Send-CIPPAlert -Type 'webhook' -JSONContent $JSONContent -TenantFilter $Tenant -APIName 'Alerts'
+                #$JSONContent = New-CIPPAlertTemplate -Data $Data -Format 'json' -InputObject 'table'
+                $JSONContent = $CurrentStandardsLogs | ConvertTo-Json -Compress
+                Send-CIPPAlert -Type 'webhook' -JSONContent $JSONContent -TenantFilter $Tenant -APIName 'StandardsAlerts'
                 $updateStandards = $CurrentStandardsLogs | ForEach-Object {
                     if ($_.PSObject.Properties.Name -contains 'sentAsAlert') {
                         $_.sentAsAlert = $true
