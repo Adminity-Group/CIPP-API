@@ -36,7 +36,7 @@ Function Invoke-ExecSetTenantShortName {
         $Table = Get-CippTable -tablename 'CippReplacemap'
 
         $VariableName = "shortName"
-        $VariableValue = $Request.Body.Value
+        $VariableValue = $Request.Body.Value ?? $Request.body.ShortName
         $VariableEntity = @{
             PartitionKey = $customerId
             RowKey       = $VariableName
