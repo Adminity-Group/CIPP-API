@@ -24,7 +24,7 @@ Function Invoke-ExecSetTenantShortName {
     }
 
     try {
-        $TenantsTable = Get-CippTable -tablename Tenants
+        $TenantsTable = Get-CippTable -tablename 'CippReplacemap'
         $Tenant = Get-Tenants -TenantFilter $Request.body.value
 
         if ($Tenant.psobject.Members | Where-Object { $_.Name -eq 'shortName' }) {
