@@ -14,12 +14,22 @@ Function Invoke-AddAPDevice {
     Write-LogMessage -headers $Request.Headers -API $APINAME -message 'Accessed this API' -Sev 'Debug'
 
 
+
     # Write to the Azure Functions log stream.
     Write-Host 'PowerShell HTTP trigger function processed a request.'
     $TenantFilter = (Get-Tenants | Where-Object { $_.defaultDomainName -eq $Request.body.TenantFilter.value }).customerId
     $GroupName = if ($Request.body.Groupname) { $Request.body.Groupname } else { (New-Guid).GUID }
     Write-Host $GroupName
-    $rawDevices = $request.body.autopilotData
+
+    $rawDevices = [System.Collections.ArrayList]::new()
+    $request.body.autopilotData | ForEach-Object {
+        $dev = [pscustomobject]@{}
+        for($i = 0; $i -lt $_.psobject.Properties.name.count; $i++) {
+            $dev | Add-Member -NotePropertyName ($_.psobject.Properties.Name[$i]  -replace '\s', '') -NotePropertyValue $_.psobject.Properties.Value[$i]
+        }
+        $rawDevices.add($dev) | Out-Null
+    }
+
     $Devices = ConvertTo-Json @($rawDevices)
     $Result = try {
         $CurrentStatus = (New-GraphgetRequest -uri "https://api.partnercenter.microsoft.com/v1/customers/$tenantfilter/DeviceBatches" -scope 'https://api.partnercenter.microsoft.com/user_impersonation')
