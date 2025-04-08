@@ -90,7 +90,7 @@ function Invoke-CIPPStandardGroupTemplate {
                     Write-LogMessage -API 'Standards' -tenant $tenant -message "Created group $($groupobj.displayname) with id $($GraphRequest.id) " -Sev 'Info'
                 } else {
                     $ActionType = 'update'
-                    if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic', 'Security', 'Microsoft 365') {
+                    if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic', 'Security', 'Microsoft 365', 'm365') {
                         $GraphRequest = New-GraphPostRequest -uri "https://graph.microsoft.com/beta/groups/$($CheckExististing.id)" -tenantid $tenant -type PATCH -body (ConvertTo-Json -InputObject $BodyToship -Depth 10) -verbose
                     } else {
                         if ($groupobj.groupType -eq 'dynamicdistribution') {
