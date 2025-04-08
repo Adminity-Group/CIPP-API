@@ -53,7 +53,7 @@ function Invoke-CIPPStandardGroupTemplate {
                 if ($groupobj.groupType -eq 'AzureRole') {
                     $BodyToship | Add-Member -NotePropertyName 'isAssignableToRole' -NotePropertyValue $true
                 }
-                elseif ('Microsoft 365' -in $groupobj.groupType){
+                elseif ('Microsoft 365' -or 'm365' -in $groupobj.groupType){
                     $BodyToship.groupTypes += 'Unified'
                 }
                 if ($groupobj.membershipRules) {
@@ -65,7 +65,7 @@ function Invoke-CIPPStandardGroupTemplate {
                 }
                 if (!$CheckExististing) {
                     $ActionType = 'create'
-                    if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic', 'Security', 'Microsoft 365') {
+                    if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic', 'Security', 'Microsoft 365', 'm365') {
                         $GraphRequest = New-GraphPostRequest -uri 'https://graph.microsoft.com/beta/groups' -tenantid $tenant -type POST -body (ConvertTo-Json -InputObject $BodyToship -Depth 10) -verbose
                     } else {
                         if ($groupobj.groupType -eq 'dynamicdistribution') {
@@ -122,3 +122,6 @@ function Invoke-CIPPStandardGroupTemplate {
         }
     }
 }
+($t2.groupType -contains 'Microsoft 365' -or 'm365')
+
+('Microsoft 365' -or 'm365' -in $t2.groupType)
