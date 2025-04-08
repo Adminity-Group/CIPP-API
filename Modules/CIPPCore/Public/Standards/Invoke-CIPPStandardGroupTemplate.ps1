@@ -53,7 +53,7 @@ function Invoke-CIPPStandardGroupTemplate {
                 if ($groupobj.groupType -eq 'AzureRole') {
                     $BodyToship | Add-Member -NotePropertyName 'isAssignableToRole' -NotePropertyValue $true
                 }
-                elseif ('Microsoft 365' -or 'm365' -in $groupobj.groupType){
+                elseif ($groupobj.groupType -contains ('Microsoft 365' -or 'm365')){
                     $BodyToship.groupTypes += 'Unified'
                 }
                 if ($groupobj.membershipRules) {
@@ -122,6 +122,3 @@ function Invoke-CIPPStandardGroupTemplate {
         }
     }
 }
-($t2.groupType -contains 'Microsoft 365' -or 'm365')
-
-('Microsoft 365' -or 'm365' -in $t2.groupType)
