@@ -91,6 +91,9 @@ function Invoke-CIPPStandardGroupTemplate {
                 } else {
                     $ActionType = 'update'
                     if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic', 'Security', 'Microsoft 365', 'm365') {
+                        $BodyToship.PSObject.Properties.Remove('visibility')
+                        $BodyToship.PSObject.Properties.Remove('mailEnabled')
+                        $BodyToship.PSObject.Properties.Remove('groupTypes')
                         $GraphRequest = New-GraphPostRequest -uri "https://graph.microsoft.com/beta/groups/$($CheckExististing.id)" -tenantid $tenant -type PATCH -body (ConvertTo-Json -InputObject $BodyToship -Depth 10) -verbose
                     } else {
                         if ($groupobj.groupType -eq 'dynamicdistribution') {
