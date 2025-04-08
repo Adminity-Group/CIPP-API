@@ -15,7 +15,7 @@ function Invoke-CIPPStandardGroupTemplate {
         CAT
             Templates
         DISABLEDFEATURES
-            
+
         IMPACT
             Medium Impact
         ADDEDDATE
@@ -45,20 +45,27 @@ function Invoke-CIPPStandardGroupTemplate {
                     'displayName'      = $groupobj.Displayname
                     'description'      = $groupobj.Description
                     'mailNickname'     = $groupobj.username
-                    mailEnabled        = [bool]$false
-                    securityEnabled    = [bool]$true
+                    mailEnabled        = $groupobj.mailEnabled ?? [bool]$false
+                    securityEnabled    = $groupobj.securityEnabled ?? [bool]$true
+                    groupTypes         = @()
+                    visibility         = $groupobj.visibility
                 }
                 if ($groupobj.groupType -eq 'AzureRole') {
                     $BodyToship | Add-Member -NotePropertyName 'isAssignableToRole' -NotePropertyValue $true
                 }
+                elseif ('Microsoft 365' -in $groupobj.groupType){
+                    $BodyToship.groupTypes += 'Unified'
+                }
                 if ($groupobj.membershipRules) {
                     $BodyToship | Add-Member -NotePropertyName 'membershipRule' -NotePropertyValue ($groupobj.membershipRules)
-                    $BodyToship | Add-Member -NotePropertyName 'groupTypes' -NotePropertyValue @('DynamicMembership')
+                    $BodyToship.groupTypes += 'DynamicMembership'
+
+                    #$BodyToship | Add-Member -NotePropertyName 'groupTypes' -NotePropertyValue @('DynamicMembership')
                     $BodyToship | Add-Member -NotePropertyName 'membershipRuleProcessingState' -NotePropertyValue 'On'
                 }
                 if (!$CheckExististing) {
                     $ActionType = 'create'
-                    if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic') {
+                    if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic', 'DynamicMembership', 'Unified') {
                         $GraphRequest = New-GraphPostRequest -uri 'https://graph.microsoft.com/beta/groups' -tenantid $tenant -type POST -body (ConvertTo-Json -InputObject $BodyToship -Depth 10) -verbose
                     } else {
                         if ($groupobj.groupType -eq 'dynamicdistribution') {
@@ -68,7 +75,7 @@ function Invoke-CIPPStandardGroupTemplate {
                                 PrimarySmtpAddress = $email
                             }
                             $GraphRequest = New-ExoRequest -tenantid $tenant -cmdlet 'New-DynamicDistributionGroup' -cmdParams $params
-                        } else {
+                        }  else{
                             $Params = @{
                                 Name                               = $groupobj.Displayname
                                 Alias                              = $groupobj.username
@@ -83,7 +90,7 @@ function Invoke-CIPPStandardGroupTemplate {
                     Write-LogMessage -API 'Standards' -tenant $tenant -message "Created group $($groupobj.displayname) with id $($GraphRequest.id) " -Sev 'Info'
                 } else {
                     $ActionType = 'update'
-                    if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic') {
+                    if ($groupobj.groupType -in 'Generic', 'azurerole', 'dynamic', 'DynamicMembership', 'Unified') {
                         $GraphRequest = New-GraphPostRequest -uri "https://graph.microsoft.com/beta/groups/$($CheckExististing.id)" -tenantid $tenant -type PATCH -body (ConvertTo-Json -InputObject $BodyToship -Depth 10) -verbose
                     } else {
                         if ($groupobj.groupType -eq 'dynamicdistribution') {

@@ -23,6 +23,9 @@ Function Invoke-AddGroupTemplate {
             MembershipRules = $request.body.membershipRules
             allowExternal   = $request.body.allowExternal
             username        = $request.body.username
+            visibility      = $request.body.visibility
+            mailEnabled     = $request.body.mailEnabled
+            securityEnabled = $request.body.securityEnabled
             GUID            = $GUID
         } | ConvertTo-Json
         $Table = Get-CippTable -tablename 'templates'
