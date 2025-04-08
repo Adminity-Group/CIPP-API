@@ -35,7 +35,7 @@ Function Invoke-ExecStandardsRun {
 
             $ProcessorFunction = [PSCustomObject]@{
                 PartitionKey = 'Function'
-                RowKey       = "Invoke-CIPPStandardsRun-$tenantfilter"
+                RowKey       = "Invoke-CIPPStandardsRun-$tenantfilter{$((New-Guid).ToString())}"
                 FunctionName = 'Invoke-CIPPStandardsRun'
                 Parameters   = [string](ConvertTo-Json -Compress -InputObject @{
                         TenantFilter = $tenantfilter

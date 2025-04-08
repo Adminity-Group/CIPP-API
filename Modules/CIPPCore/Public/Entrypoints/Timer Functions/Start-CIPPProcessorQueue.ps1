@@ -10,7 +10,8 @@ function Start-CIPPProcessorQueue {
     $QueueItems = Get-CIPPAzDataTableEntity @QueueTable -Filter "PartitionKey eq 'Function'"
 
     foreach ($QueueItem in $QueueItems) {
-        $FunctionName = $QueueItem.FunctionName ?? $QueueItem.RowKey
+        $QueueItem.RowKey -match '^[^{]+' | Out-Null
+        $FunctionName = $QueueItem.FunctionName ?? $Matches[0]
         if ($PSCmdlet.ShouldProcess("Processing function $($FunctionName)")) {
             Write-Information "Running queued function $($FunctionName)"
             if ($QueueItem.Parameters) {
