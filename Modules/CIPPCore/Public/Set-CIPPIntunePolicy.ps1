@@ -36,6 +36,25 @@ function Set-CIPPIntunePolicy {
                     $CreateRequest = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL" -tenantid $tenantFilter -type POST -body $RawJSON
                 }
             }
+            'AppConfiguration' {
+                $PlatformType = 'MobileAppConfigurations'
+                $TemplateType = ($RawJSON | ConvertFrom-Json).'@odata.type' -replace '#microsoft.graph.', ''
+                $PolicyFile = $RawJSON | ConvertFrom-Json
+                $Null = $PolicyFile | Add-Member -MemberType NoteProperty -Name 'description' -Value $description -Force
+                $null = $PolicyFile | Add-Member -MemberType NoteProperty -Name 'displayName' -Value $displayname -Force
+                $RawJSON = ConvertTo-Json -InputObject $PolicyFile -Depth 20
+                $TemplateTypeURL =  "$($TemplateType)s"
+                $CheckExististing = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL" -tenantid $tenantFilter
+                if ($displayname -in $CheckExististing.displayName) {
+                    $PostType = 'edited'
+                    $ExistingID = $CheckExististing | Where-Object -Property displayName -EQ $displayname
+                    $CreateRequest = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL/$($ExistingID.Id)" -tenantid $tenantFilter -type PATCH -body $RawJSON
+                    $CreateRequest = $CheckExististing | Where-Object -Property displayName -EQ $DisplayName
+                } else {
+                    $PostType = 'added'
+                    $CreateRequest = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL" -tenantid $tenantFilter -type POST -body $RawJSON
+                }
+            }
             'deviceCompliancePolicies' {
                 $PlatformType = 'deviceManagement'
                 $TemplateTypeURL = 'deviceCompliancePolicies'

@@ -86,13 +86,13 @@ function Invoke-CIPPStandardIntuneTemplate {
     If ($true -in $Settings.remediate) {
         Write-Host 'starting template deploy'
         foreach ($TemplateFile in $CompareList | Where-Object -Property remediate -EQ $true) {
-            Write-Host "working on template deploy: $($Template.displayname)"
+            Write-Host "working on template deploy: $($TemplateFile.displayname)"
             try {
                 $TemplateFile.customGroup ? ($TemplateFile.AssignTo = $TemplateFile.customGroup) : $null
                 Set-CIPPIntunePolicy -TemplateType $TemplateFile.body.Type -Description $TemplateFile.description -DisplayName $TemplateFile.displayname -RawJSON $templateFile.rawJSON -AssignTo $TemplateFile.AssignTo -ExcludeGroup $TemplateFile.excludeGroup -tenantFilter $Tenant
             } catch {
                 $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to create or update Intune Template $PolicyName, Error: $ErrorMessage" -sev 'Error'
+                Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to create or update Intune Template $($TemplateFile.displayname), Error: $ErrorMessage" -sev 'Error'
             }
         }
 
