@@ -62,6 +62,7 @@ function Invoke-CIPPStandardIntuneTemplate {
                     rawJSON          = $RawJSON
                     body             = $Request.body
                     assignTo         = $Template.AssignTo
+                    customGroup      = $Template.customGroup
                     excludeGroup     = $Template.excludeGroup
                     remediate        = $Template.remediate
                     existingPolicyId = $ExistingPolicy.id
@@ -76,6 +77,7 @@ function Invoke-CIPPStandardIntuneTemplate {
                     rawJSON          = $RawJSON
                     body             = $Request.body
                     assignTo         = $Template.AssignTo
+                    customGroup      = $Template.customGroup
                     excludeGroup     = $Template.excludeGroup
                     remediate        = $Template.remediate
                     existingPolicyId = $ExistingPolicy.id
@@ -85,7 +87,8 @@ function Invoke-CIPPStandardIntuneTemplate {
         }
         catch {
             $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-            Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to compare Intune Template $($Template.TemplateList.value), Error: $ErrorMessage" -sev 'Error'
+            write-host "Failed to compare Intune Template $($Template.TemplateList.value), Error: $ErrorMessage"
+            #Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to compare Intune Template $($Template.TemplateList.value), Error: $ErrorMessage" -sev 'Error'
         }
 
     }

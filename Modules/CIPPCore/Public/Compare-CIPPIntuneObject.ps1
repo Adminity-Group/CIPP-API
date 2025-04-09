@@ -76,10 +76,10 @@ function Compare-CIPPIntuneObject {
         # Recursive function to compare objects deeply
         function Compare-ObjectsRecursively {
             param (
-                [Parameter(Mandatory = $true)]
+                [Parameter(Mandatory = $false)]
                 $Object1,
 
-                [Parameter(Mandatory = $true)]
+                [Parameter(Mandatory = $false)]
                 $Object2,
 
                 [Parameter(Mandatory = $false)]
@@ -235,7 +235,10 @@ function Compare-CIPPIntuneObject {
             return $null
         }
     } else {
-        $intuneCollection = Get-Content .\intuneCollection.json | ConvertFrom-Json -ErrorAction SilentlyContinue
+        if (!$Global:intuneCollection){
+            $intuneCollection = Get-Content .\intuneCollection.json | ConvertFrom-Json -ErrorAction SilentlyContinue
+        }
+        $intuneCollection = $Global:intuneCollection
 
         # Process reference object settings
         $referenceItems = $ReferenceObject.settings | ForEach-Object {
