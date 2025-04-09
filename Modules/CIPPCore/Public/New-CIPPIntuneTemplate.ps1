@@ -43,6 +43,12 @@ function New-CIPPIntuneTemplate {
             $DisplayName = $Template.displayName
             $TemplateJson = ConvertTo-Json -InputObject $Template -Depth 100 -Compress
         }
+        'MobileAppConfigurations' {
+            $Type = 'AppConfiguration'
+            $Template = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/deviceAppManagement/$($urlname)('$($ID)')" -tenantid $tenantfilter
+            $DisplayName = $Template.displayName
+            $TemplateJson = ConvertTo-Json -InputObject $Template -Depth 100 -Compress
+        }
         'configurationPolicies' {
             $Type = 'Catalog'
             $Template = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/deviceManagement/$($urlname)('$($ID)')?`$expand=settings" -tenantid $tenantfilter | Select-Object name, description, settings, platforms, technologies, templateReference
