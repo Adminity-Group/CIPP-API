@@ -37,50 +37,57 @@ function Invoke-CIPPStandardIntuneTemplate {
     $Request = @{body = $null }
 
     $CompareList = foreach ($Template in $Settings) {
-        $Request.body = (Get-CIPPAzDataTableEntity @Table -Filter $Filter | Where-Object -Property RowKey -Like "$($Template.TemplateList.value)*").JSON | ConvertFrom-Json -ErrorAction SilentlyContinue
-        if ($Request.body -eq $null) {
-            Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to find template $($Template.TemplateList.value). Has this Intune Template been deleted?" -sev 'Error'
-            continue
-        }
-        $displayname = $request.body.Displayname
-        $description = $request.body.Description
-        $RawJSON = $Request.body.RawJSON
-        $ExistingPolicy = Get-CIPPIntunePolicy -tenantFilter $Tenant -DisplayName $displayname -TemplateType $Request.body.Type
-        if ($ExistingPolicy) {
-            $RawJSON = Get-CIPPTextReplacement -Text $RawJSON -TenantFilter $Tenant
-            $JSONExistingPolicy = $ExistingPolicy.cippconfiguration | ConvertFrom-Json
-            $JSONTemplate = $RawJSON | ConvertFrom-Json
-            $Compare = Compare-CIPPIntuneObject -ReferenceObject $JSONTemplate -DifferenceObject $JSONExistingPolicy -compareType $Request.body.Type
-        }
-        if ($Compare) {
-            [PSCustomObject]@{
-                MatchFailed      = $true
-                displayname      = $displayname
-                description      = $description
-                compare          = $Compare
-                rawJSON          = $RawJSON
-                body             = $Request.body
-                assignTo         = $Template.AssignTo
-                excludeGroup     = $Template.excludeGroup
-                remediate        = $Template.remediate
-                existingPolicyId = $ExistingPolicy.id
-                templateId       = $Template.TemplateList.value
+        try {
+            $Request.body = (Get-CIPPAzDataTableEntity @Table -Filter $Filter | Where-Object -Property RowKey -Like "$($Template.TemplateList.value)*").JSON | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if ($Request.body -eq $null) {
+                Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to find template $($Template.TemplateList.value). Has this Intune Template been deleted?" -sev 'Error'
+                continue
             }
-        } else {
-            [PSCustomObject]@{
-                MatchFailed      = $false
-                displayname      = $displayname
-                description      = $description
-                compare          = $false
-                rawJSON          = $RawJSON
-                body             = $Request.body
-                assignTo         = $Template.AssignTo
-                excludeGroup     = $Template.excludeGroup
-                remediate        = $Template.remediate
-                existingPolicyId = $ExistingPolicy.id
-                templateId       = $Template.TemplateList.value
+            $displayname = $request.body.Displayname
+            $description = $request.body.Description
+            $RawJSON = $Request.body.RawJSON
+            $ExistingPolicy = Get-CIPPIntunePolicy -tenantFilter $Tenant -DisplayName $displayname -TemplateType $Request.body.Type
+            if ($ExistingPolicy) {
+                $RawJSON = Get-CIPPTextReplacement -Text $RawJSON -TenantFilter $Tenant
+                $JSONExistingPolicy = $ExistingPolicy.cippconfiguration | ConvertFrom-Json
+                $JSONTemplate = $RawJSON | ConvertFrom-Json
+                $Compare = Compare-CIPPIntuneObject -ReferenceObject $JSONTemplate -DifferenceObject $JSONExistingPolicy -compareType $Request.body.Type
+            }
+            if ($Compare) {
+                [PSCustomObject]@{
+                    MatchFailed      = $true
+                    displayname      = $displayname
+                    description      = $description
+                    compare          = $Compare
+                    rawJSON          = $RawJSON
+                    body             = $Request.body
+                    assignTo         = $Template.AssignTo
+                    excludeGroup     = $Template.excludeGroup
+                    remediate        = $Template.remediate
+                    existingPolicyId = $ExistingPolicy.id
+                    templateId       = $Template.TemplateList.value
+                }
+            } else {
+                [PSCustomObject]@{
+                    MatchFailed      = $false
+                    displayname      = $displayname
+                    description      = $description
+                    compare          = $false
+                    rawJSON          = $RawJSON
+                    body             = $Request.body
+                    assignTo         = $Template.AssignTo
+                    excludeGroup     = $Template.excludeGroup
+                    remediate        = $Template.remediate
+                    existingPolicyId = $ExistingPolicy.id
+                    templateId       = $Template.TemplateList.value
+                }
             }
         }
+        catch {
+            $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
+            Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to compare Intune Template $($Template.TemplateList.value), Error: $ErrorMessage" -sev 'Error'
+        }
+
     }
 
     If ($true -in $Settings.remediate) {
