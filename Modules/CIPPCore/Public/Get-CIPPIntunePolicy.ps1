@@ -41,6 +41,36 @@ function Get-CIPPIntunePolicy {
                     return $policies
                 }
             }
+            'AppConfiguration' {
+                $PlatformType = 'deviceAppManagement'
+                $TemplateTypeURL = 'mobileAppConfigurations'
+
+                if ($DisplayName) {
+                    $policies = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL" -tenantid $tenantFilter
+                    $policy = $policies | Where-Object -Property displayName -EQ $DisplayName
+                    if ($policy) {
+                        $policyDetails = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL('$($policy.id)')" -tenantid $tenantFilter
+                        $policyJson = ConvertTo-Json -InputObject $policyDetails -Depth 100 -Compress
+                        $policy | Add-Member -MemberType NoteProperty -Name 'cippconfiguration' -Value $policyJson -Force
+                    }
+                    return $policy
+                } elseif ($PolicyId) {
+                    $policy = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL('$PolicyId')" -tenantid $tenantFilter
+                    if ($policy) {
+                        $policyJson = ConvertTo-Json -InputObject $policy -Depth 100 -Compress
+                        $policy | Add-Member -MemberType NoteProperty -Name 'cippconfiguration' -Value $policyJson -Force
+                    }
+                    return $policy
+                } else {
+                    $policies = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL" -tenantid $tenantFilter
+                    foreach ($policy in $policies) {
+                        $policyDetails = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/$PlatformType/$TemplateTypeURL('$($policy.id)')" -tenantid $tenantFilter
+                        $policyJson = ConvertTo-Json -InputObject $policyDetails -Depth 100 -Compress
+                        $policy | Add-Member -MemberType NoteProperty -Name 'cippconfiguration' -Value $policyJson -Force
+                    }
+                    return $policies
+                }
+            }
             'deviceCompliancePolicies' {
                 $PlatformType = 'deviceManagement'
                 $TemplateTypeURL = 'deviceCompliancePolicies'
