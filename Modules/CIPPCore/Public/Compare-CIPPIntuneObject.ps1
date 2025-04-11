@@ -251,20 +251,33 @@ function Compare-CIPPIntuneObject {
                             if ($groupValue.children -is [System.Array]) {
                                 foreach ($child in $groupValue.children) {
                                     $childIntuneObj = $intuneCollection | Where-Object { $_.id -eq $child.settingDefinitionId }
-                                    $childLabel = if ($childIntuneObj?.displayName) {
+                                    $childLabel = if (${childIntuneObj}?.displayName) {
                                         $childIntuneObj.displayName
                                     } else {
                                         $child.settingDefinitionId
                                     }
                                     $childValue = $null
-                                    if ($child.choiceSettingValue?.value) {
+                                    if ($child.{choiceSettingValue}?.value) {
                                         $option = $childIntuneObj.options | Where-Object {
                                             $_.id -eq $child.choiceSettingValue.value
                                         }
-                                        $childValue = if ($option?.displayName) {
+                                        $childValue = if (${option}?.displayName) {
                                             $option.displayName
                                         } else {
                                             $child.choiceSettingValue.value
+                                        }
+                                    }
+                                    else {
+                                        $ValueKey = ($child.'@odata.type' -replace '#microsoft.graph.deviceManagementConfiguration', '') -replace 'Instance', 'Value'
+                                        if ($child.${ValueKey}?.value) {
+                                            $option = $childIntuneObj.options | Where-Object {
+                                                $_.id -eq $child.$ValueKey.value
+                                            }
+                                            $childValue = if (${option}?.displayName) {
+                                                $option.displayName
+                                            } else {
+                                                $child.$ValueKey.value
+                                            }
                                         }
                                     }
 
@@ -345,20 +358,34 @@ function Compare-CIPPIntuneObject {
                             if ($groupValue.children -is [System.Array]) {
                                 foreach ($child in $groupValue.children) {
                                     $childIntuneObj = $intuneCollection | Where-Object { $_.id -eq $child.settingDefinitionId }
-                                    $childLabel = if ($childIntuneObj?.displayName) {
+                                    $childLabel = if (${childIntuneObj}?.displayName) {
                                         $childIntuneObj.displayName
                                     } else {
                                         $child.settingDefinitionId
                                     }
                                     $childValue = $null
-                                    if ($child.choiceSettingValue?.value) {
+                                    if ($child.{choiceSettingValue}?.value) {
                                         $option = $childIntuneObj.options | Where-Object {
                                             $_.id -eq $child.choiceSettingValue.value
                                         }
-                                        $childValue = if ($option?.displayName) {
+                                        $childValue = if (${option}?.displayName) {
                                             $option.displayName
                                         } else {
                                             $child.choiceSettingValue.value
+                                        }
+                                    }
+
+                                    else {
+                                        $ValueKey = ($child.'@odata.type' -replace '#microsoft.graph.deviceManagementConfiguration', '') -replace 'Instance', 'Value'
+                                        if ($child.${ValueKey}?.value) {
+                                            $option = $childIntuneObj.options | Where-Object {
+                                                $_.id -eq $child.$ValueKey.value
+                                            }
+                                            $childValue = if (${option}?.displayName) {
+                                                $option.displayName
+                                            } else {
+                                                $child.$ValueKey.value
+                                            }
                                         }
                                     }
 

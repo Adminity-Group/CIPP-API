@@ -95,7 +95,7 @@ function Invoke-CIPPStandardIntuneTemplate {
 
     If ($true -in $Settings.remediate) {
         Write-Host 'starting template deploy'
-        foreach ($TemplateFile in $CompareList | Where-Object {$_.remediate -EQ $true -and $_.MatchFailed -eq $false}) {
+        foreach ($TemplateFile in ($CompareList | Where-Object {$_.remediate -EQ $true -and $_.MatchFailed -eq $true})) {
             Write-Host "working on template deploy: $($TemplateFile.displayname)"
             try {
                 $TemplateFile.customGroup ? ($TemplateFile.AssignTo = $TemplateFile.customGroup) : $null
