@@ -82,7 +82,7 @@ function Invoke-CIPPStandardAutopilotProfile {
                     description        = $settings.Description
                     usertype           = $usertype
                     DeploymentMode     = $DeploymentMode
-                    assignto           = $settings.Assignto
+                    assignto           = $settings.Assignto ?? $settings.AssignToAllDevices
                     devicenameTemplate = $Settings.DeviceNameTemplate
                     allowWhiteGlove    = $Settings.allowWhiteglove
                     CollectHash        = $Settings.CollectHash
@@ -92,6 +92,7 @@ function Invoke-CIPPStandardAutopilotProfile {
                     Autokeyboard       = $Settings.Autokeyboard
                     Language           = $Settings.languages.value
                 }
+                write-host "WAP: Parameters $($Parameters | ConvertTo-Json)"
                 Set-CIPPDefaultAPDeploymentProfile @Parameters
                 Write-LogMessage -API 'Standards' -tenant $tenant -message "Created Autopilot profile '$($settings.DisplayName)'" -sev Info
             } catch {

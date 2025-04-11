@@ -42,6 +42,7 @@ function Set-CIPPDefaultAPDeploymentProfile {
             $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $Shortname
             #Write-Host "WAP: New devTemplate $($DeviceNameTemplate)"
         }
+        Write-Host "WAP: language $($Language)"
         $ObjBody = [pscustomobject]@{
             '@odata.type'                            = '#microsoft.graph.azureADWindowsAutopilotDeploymentProfile'
             'displayName'                            = "$($displayname)"
