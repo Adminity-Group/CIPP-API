@@ -67,6 +67,7 @@ function Get-CIPPTextReplacement {
             $Text = $Text -replace '%CIPPGroup\{' + [regex]::Escape($GroupName) + '\}%', $EntraIdGroup.securityIdentifier
         } else {
             Write-LogMessage -API 'Onboarding' -message "Group '$GroupName' not found in EntraID." -Sev 'Error'
+            Break
         }
     }
 
