@@ -46,6 +46,32 @@ function Get-CIPPTextReplacement {
         $String = '%{0}%' -f $Replace.Key
         $Text = $Text -replace $String, $Replace.Value
     }
+
+    # Replace EntraID group display name with SID
+    if ($Text -match '%CIPPGroup\{(.*?)\}%') {
+        $GroupName = $Matches[1] # Extract the value inside the curly braces
+        $EntraIdGroup = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName,securityIdentifier&$top=999' -tenantid $CustomerId | Where-Object -Property displayName -EQ $GroupName
+
+        $Text = $Text -replace '%CIPPGroup\{.*?\}%', $EntraIdGroup.securityIdentifier
+    }
+
+    while ($Text -match '%CIPPGroup\{(.*?)\}%') {
+        $GroupName = $Matches[1] # Extract the value inside the curly braces
+        Write-Host "Replace: Extracted Group Name: $GroupName"
+
+        # Fetch the group details from Microsoft Graph
+        $EntraIdGroup = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName,securityIdentifier&$top=999' -tenantid $CustomerId | Where-Object -Property displayName -EQ $GroupName
+
+        if ($EntraIdGroup) {
+            # Replace the current match with the group's securityIdentifier
+            $Text = $Text -replace '%CIPPGroup\{' + [regex]::Escape($GroupName) + '\}%', $EntraIdGroup.securityIdentifier
+        } else {
+            Write-LogMessage -API 'Onboarding' -message "Group '$GroupName' not found in EntraID." -Sev 'Error'
+        }
+    }
+
+
+
     #default replacements for all tenants: %tenantid% becomes $tenant.customerId, %tenantfilter% becomes $tenant.defaultDomainName, %tenantname% becomes $tenant.displayName
     $Text = $Text -replace '%tenantid%', $Tenant.customerId
     $Text = $Text -replace '%tenantfilter%', $Tenant.defaultDomainName
