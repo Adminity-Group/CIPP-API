@@ -48,13 +48,6 @@ function Get-CIPPTextReplacement {
     }
 
     # Replace EntraID group display name with SID
-    if ($Text -match '%CIPPGroup\{(.*?)\}%') {
-        $GroupName = $Matches[1] # Extract the value inside the curly braces
-        $EntraIdGroup = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName,securityIdentifier&$top=999' -tenantid $CustomerId | Where-Object -Property displayName -EQ $GroupName
-
-        $Text = $Text -replace '%CIPPGroup\{.*?\}%', $EntraIdGroup.securityIdentifier
-    }
-
     while ($Text -match '%CIPPGroup\{(.*?)\}%') {
         $GroupName = $Matches[1] # Extract the value inside the curly braces
         Write-Host "Replace: Extracted Group Name: $GroupName"
