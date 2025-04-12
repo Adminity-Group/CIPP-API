@@ -89,8 +89,8 @@ function Invoke-CIPPStandardAutopilotProfile {
                     hideChangeAccount  = $Settings.HideChangeAccount
                     hidePrivacy        = $Settings.HidePrivacy
                     hideTerms          = $Settings.HideTerms
-                    Autokeyboard       = $Settings.Autokeyboard
-                    Language           = $Settings.languages.value
+                    Autokeyboard       = [bool]$Settings.Autokeyboard
+                    Language           = [string]$Settings.languages.value
                 }
                 write-host "WAP: Parameters $($Parameters | ConvertTo-Json)"
                 Set-CIPPDefaultAPDeploymentProfile @Parameters

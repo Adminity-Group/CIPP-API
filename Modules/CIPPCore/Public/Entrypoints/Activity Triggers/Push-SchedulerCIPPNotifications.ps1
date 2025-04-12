@@ -98,6 +98,7 @@ function Push-SchedulerCIPPNotifications {
                     }
                     $_
                 }
+                if ($updateStandards) { Add-CIPPAzDataTableEntity @StandardsTable -Entity $updateStandards -Force }
             }
 
         }
