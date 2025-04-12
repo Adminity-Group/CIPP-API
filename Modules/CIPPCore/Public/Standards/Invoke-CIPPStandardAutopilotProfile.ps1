@@ -72,6 +72,8 @@ function Invoke-CIPPStandardAutopilotProfile {
             Write-LogMessage -API 'Standards' -tenant $tenant -message "Autopilot profile '$($settings.DisplayName)' already exists" -sev Info
         } else {
             try {
+                $Settings = $Settings | ConvertTo-Json -Depth 100 | ConvertFrom-Json
+
                 Write-Host "WAP: IN: $($settings | ConvertTo-Json -Depth 100)"
                 write-host "WAP: In type $($settings.gettype())"
                 if ($settings.NotLocalAdmin -eq $true) { $usertype = 'Standard' } else { $usertype = 'Administrator' }
