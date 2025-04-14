@@ -14,7 +14,7 @@ function Invoke-CIPPStandardAutopilotProfile {
             Device Management Standards
         TAG
         DISABLEDFEATURES
-
+            {"report":true,"warn":true,"remediate":false}
         ADDEDCOMPONENT
             {"type":"textField","name":"standards.AutopilotProfile.DisplayName","label":"Profile Display Name"}
             {"type":"textField","name":"standards.AutopilotProfile.Description","label":"Profile Description"}
@@ -85,15 +85,15 @@ function Invoke-CIPPStandardAutopilotProfile {
                     description        = $settings.Description
                     usertype           = $usertype
                     DeploymentMode     = $DeploymentMode
-                    assignto           = $settings.Assignto ?? $settings.AssignToAllDevices
+                    assignto           = $settings.AssignToAllDevices
                     devicenameTemplate = $Settings.DeviceNameTemplate
-                    allowWhiteGlove    = $Settings.allowWhiteglove
+                    allowWhiteGlove    = $Settings.AllowWhiteGlove
                     CollectHash        = $Settings.CollectHash
                     hideChangeAccount  = $Settings.HideChangeAccount
                     hidePrivacy        = $Settings.HidePrivacy
                     hideTerms          = $Settings.HideTerms
-                    Autokeyboard       = [bool]$Settings.Autokeyboard
-                    Language           = [string]$Settings.languages.value
+                    AutoKeyboard       = [bool]$Settings.AutoKeyboard
+                    Language           = [string]$Settings.Languages.value
                 }
                 write-host "WAP: Parameters $($Parameters | ConvertTo-Json)"
                 Set-CIPPDefaultAPDeploymentProfile @Parameters

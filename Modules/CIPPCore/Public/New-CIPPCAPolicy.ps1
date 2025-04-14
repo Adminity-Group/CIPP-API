@@ -111,24 +111,6 @@ function New-CIPPCAPolicy {
         }
     }
 
-    # foreach ($IncludedApplication in $JSONObj.conditions.applications.includeApplications) {
-    #     if (!$IncludedApplication -eq "All"){
-    #         $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/applications' -tenantid $TenantFilter | Where-Object -Property displayName -EQ $IncludedApplication
-    #         if ($CheckExististing) {
-    #             $index = [array]::IndexOf($JSONObj.conditions.applications.includeApplications, $IncludedApplication)
-    #             $JSONObj.conditions.applications.includeApplications[$index] = $CheckExististing.id
-    #         }
-    #     }
-    # }
-
-    # foreach ($ExcludedApplication in $JSONObj.conditions.applications.excludeApplications) {
-    #     $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/applications' -tenantid $TenantFilter | Where-Object -Property displayName -EQ $ExcludedApplication
-    #     if ($CheckExististing) {
-    #         $index = [array]::IndexOf($JSONObj.conditions.applications.excludeApplications, $ExcludedApplication)
-    #         $JSONObj.conditions.applications.excludeApplications[$index] = $CheckExististing.id
-    #     }
-    # }
-
     foreach ($location in $JSONObj.conditions.locations.includeLocations) {
         Write-Information "Replacing $location"
         $lookup = $LocationLookupTable | Where-Object -Property name -EQ $location
@@ -229,6 +211,10 @@ function New-CIPPCAPolicy {
             }
         } else {
             Write-Host 'Creating'
+            if ($JSONobj.GrantControls.authenticationStrength.policyType -or $JSONObj.$jsonobj.LocationInfo) {
+                #quick fix for if the policy isn't available
+                Start-Sleep 1
+            }
             if ($State -eq "NoOverwrite"){
                 $Jsonobj.state = ($RawJSON | ConvertFrom-Json).state
                 $RawJSON = ConvertTo-Json -InputObject $JSONObj -Depth 10 -Compress
