@@ -120,6 +120,7 @@ function Push-ExecScheduledCommand {
             '*email*' { Send-CIPPAlert -Type 'email' -Title $title -HTMLContent $HTML -TenantFilter $Tenant }
             '*webhook*' {
                 $Webhook = [PSCustomObject]@{
+                    'tenantId' = $TenantInfo.customerId
                     'Tenant'   = $Tenant
                     'TaskInfo' = $task
                     'Results'  = $Results
