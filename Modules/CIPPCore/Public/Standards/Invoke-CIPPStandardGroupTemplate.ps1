@@ -30,7 +30,7 @@ function Invoke-CIPPStandardGroupTemplate {
     param($Tenant, $Settings)
     ##$Rerun -Type Standard -Tenant $Tenant -Settings $Settings 'GroupTemplate'
 
-    If ($Settings.remediate -eq $true) {
+    if ($Settings.remediate -eq $true) {
         #Because the list name changed from TemplateList to groupTemplate by someone :@, we'll need to set it back to TemplateList
         $Settings.groupTemplate ? ($Settings | Add-Member -NotePropertyName 'TemplateList' -NotePropertyValue $Settings.groupTemplate) : $null
         Write-Host "Settings: $($Settings.TemplateList | ConvertTo-Json)"
@@ -42,13 +42,13 @@ function Invoke-CIPPStandardGroupTemplate {
                 $email = if ($groupobj.domain) { "$($groupobj.username)@$($groupobj.domain)" } else { "$($groupobj.username)@$($Tenant)" }
                 $CheckExististing = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/groups?$top=999' -tenantid $tenant | Where-Object -Property displayName -EQ $groupobj.displayname
                 $BodyToship = [pscustomobject] @{
-                    'displayName'      = $groupobj.Displayname
-                    'description'      = $groupobj.Description
-                    'mailNickname'     = $groupobj.username
-                    mailEnabled        = $groupobj.mailEnabled ?? [bool]$false
-                    securityEnabled    = $groupobj.securityEnabled ?? [bool]$true
-                    groupTypes         = @()
-                    visibility         = $groupobj.visibility
+                    'displayName'   = $groupobj.Displayname
+                    'description'   = $groupobj.Description
+                    'mailNickname'  = $groupobj.username
+                    mailEnabled     = $groupobj.mailEnabled ?? [bool]$false
+                    securityEnabled = $groupobj.securityEnabled ?? [bool]$true
+                    groupTypes      = @()
+                    visibility      = $groupobj.visibility
                 }
                 if ($groupobj.groupType -eq 'AzureRole') {
                     $BodyToship | Add-Member -NotePropertyName 'isAssignableToRole' -NotePropertyValue $true
