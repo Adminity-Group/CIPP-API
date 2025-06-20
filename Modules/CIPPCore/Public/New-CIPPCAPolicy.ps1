@@ -102,6 +102,14 @@ function New-CIPPCAPolicy {
                 if ($location.countriesAndRegions) { $location.countriesAndRegions = @($location.countriesAndRegions) }
                 $Body = ConvertTo-Json -InputObject $Location
                 $GraphRequest = New-GraphPOSTRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/namedLocations' -body $body -Type POST -tenantid $tenantfilter -asApp $true
+                $retryCount = 0
+                do {
+                    Write-Host "Checking for location $($GraphRequest.id) attempt $retryCount. $TenantFilter"
+                    $LocationRequest = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/identity/conditionalAccess/namedLocations' -tenantid $tenantfilter -asApp $true | Where-Object -Property id -EQ $GraphRequest.id
+                    Write-Host "LocationRequest: $($LocationRequest.id)"
+                    Start-Sleep -Seconds 2
+                    $retryCount++
+                } while ((!$LocationRequest -or !$LocationRequest.id) -and ($retryCount -lt 5))
                 Write-LogMessage -Headers $User -API $APINAME -message "Created new Named Location: $($location.displayName)" -Sev 'Info'
                 [pscustomobject]@{
                     id   = $GraphRequest.id
@@ -212,8 +220,7 @@ function New-CIPPCAPolicy {
         } else {
             Write-Host 'Creating'
             if ($JSONobj.GrantControls.authenticationStrength.policyType -or $JSONObj.$jsonobj.LocationInfo) {
-                #quick fix for if the policy isn't available
-                Start-Sleep 1
+                Start-Sleep 3
             }
             if ($State -eq "NoOverwrite"){
                 $Jsonobj.state = ($RawJSON | ConvertFrom-Json).state
