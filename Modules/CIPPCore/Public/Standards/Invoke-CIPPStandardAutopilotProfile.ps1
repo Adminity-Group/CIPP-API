@@ -40,15 +40,21 @@ function Invoke-CIPPStandardAutopilotProfile {
         https://docs.cipp.app/user-documentation/tenant/standards/list-standards
     #>
     param($Tenant, $Settings)
+    $TestResult = Test-CIPPStandardLicense -StandardName 'AutopilotProfile' -TenantFilter $Tenant -RequiredCapabilities @('INTUNE_A', 'MDM_Services', 'EMS', 'SCCM', 'MICROSOFTINTUNEPLAN1')
 
     # Get the current configuration
+
+    if ($TestResult -eq $false) {
+        Write-Host "We're exiting as the correct license is not present for this standard."
+        return $true
+    } #we're done.
     try {
         # Replace variables in displayname to prevent duplicates
         $DisplayName = Get-CIPPTextReplacement -Text $Settings.DisplayName -TenantFilter $Tenant
 
         $CurrentConfig = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/deviceManagement/windowsAutopilotDeploymentProfiles' -tenantid $Tenant |
-            Where-Object { $_.displayName -eq $DisplayName } |
-            Select-Object -Property displayName, description, deviceNameTemplate, language, enableWhiteGlove, extractHardwareHash, outOfBoxExperienceSetting, preprovisioningAllowed
+        Where-Object { $_.displayName -eq $DisplayName } |
+        Select-Object -Property displayName, description, deviceNameTemplate, language, enableWhiteGlove, extractHardwareHash, outOfBoxExperienceSetting, preprovisioningAllowed
 
         $Settings = $Settings | ConvertTo-Json -Depth 100 | ConvertFrom-Json
 

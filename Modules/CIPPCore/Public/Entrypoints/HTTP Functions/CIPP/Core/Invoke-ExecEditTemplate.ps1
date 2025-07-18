@@ -1,6 +1,6 @@
 using namespace System.Net
 
-Function Invoke-ExecEditTemplate {
+function Invoke-ExecEditTemplate {
     <#
     .FUNCTIONALITY
         Entrypoint,AnyTenant
@@ -16,15 +16,15 @@ Function Invoke-ExecEditTemplate {
 
     try {
         $Table = Get-CippTable -tablename 'templates'
-        $guid = $request.body.guid
+        $guid = $request.body.id
         $JSON = ConvertTo-Json -Compress -Depth 100 -InputObject ($request.body | Select-Object * -ExcludeProperty GUID)
-        $Type = $request.Body.Type
+        $Type = $request.query.Type
 
         if ($Type -eq 'IntuneTemplate') {
             Write-Host 'Intune Template'
             $OriginalTemplate = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq 'IntuneTemplate' and RowKey eq '$GUID'"
             $OriginalTemplate = ($OriginalTemplate.JSON | ConvertFrom-Json -Depth 100)
-            $RawJSON = $OriginalTemplate.RAWJson
+            $RawJSON = ConvertTo-Json -Compress -Depth 100 -InputObject $Request.body.parsedRAWJson
             Set-CIPPIntuneTemplate -RawJSON $RawJSON -GUID $GUID -DisplayName $Request.body.displayName -Description $Request.body.description -templateType $OriginalTemplate.Type -Headers $Request.Headers
         }
         elseif ($Type -eq 'ScriptTemplate'){
@@ -36,7 +36,6 @@ Function Invoke-ExecEditTemplate {
         }
         else {
             $Table.Force = $true
-
             Add-CIPPAzDataTableEntity @Table -Entity @{
                 JSON         = "$JSON"
                 RowKey       = "$GUID"
