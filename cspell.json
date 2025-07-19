@@ -99,7 +99,8 @@
     "exo_mailtipsenabled",
     "mip_search_auditlog",
     "onmicrosoft",
-    "MOERA"
+    "MOERA",
+    "test"
   ],
   "import": []
 }
