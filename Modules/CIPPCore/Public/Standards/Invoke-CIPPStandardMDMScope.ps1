@@ -37,23 +37,28 @@ function Invoke-CIPPStandardMDMScope {
         return $true
     } #we're done.
 
-    $MDMSettings = @(
-        [PSCustomObject]@{
-            "id" = "d4ebce55-015a-49b5-a083-c84d1797ae8c"
-            "complianceUrl" = "https://portal.manage.microsoft.com/?portalAction"
-            "discoveryUrl" = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
-            "termsOfUseUrl" = "https://portal.manage.microsoft.com/TermsofUse.aspx"
-        },
-        [PSCustomObject]@{
-            "id" = "0000000a-0000-0000-c000-000000000000"
-            "complianceUrl" = "https://portal.manage.microsoft.com/?portalAction=Compliance"
-            "discoveryUrl" = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
-            "termsOfUseUrl" = "https://portal.manage.microsoft.com/TermsofUse.aspx"
-        }
-    )
-
-    #$CurrentInfo = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000?$expand=includedGroups' -tenantid $Tenant
-    $CurrentInfo = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies?$expand=includedGroups' -tenantid $Tenant
+    try {
+        $MDMSettings = @(
+            [PSCustomObject]@{
+                "id" = "d4ebce55-015a-49b5-a083-c84d1797ae8c"
+                "complianceUrl" = "https://portal.manage.microsoft.com/?portalAction"
+                "discoveryUrl" = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
+                "termsOfUseUrl" = "https://portal.manage.microsoft.com/TermsofUse.aspx"
+            },
+            [PSCustomObject]@{
+                "id" = "0000000a-0000-0000-c000-000000000000"
+                "complianceUrl" = "https://portal.manage.microsoft.com/?portalAction=Compliance"
+                "discoveryUrl" = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
+                "termsOfUseUrl" = "https://portal.manage.microsoft.com/TermsofUse.aspx"
+            }
+        )
+        $CurrentInfo = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies?$expand=includedGroups' -tenantid $Tenant
+    }
+    catch {
+        $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
+        Write-LogMessage -API 'Standards' -Tenant $Tenant -Message "Could not get the MDM Scope state for $Tenant. Error: $ErrorMessage" -Sev Error
+        return
+    }
 
     $CurrentInfo | Where-Object { $_.id -notin $MDMSettings.id } | ForEach-Object {
         $currentsp = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/servicePrincipals?`$filter=appId eq '$($_.id)'" -tenantid $Tenant
