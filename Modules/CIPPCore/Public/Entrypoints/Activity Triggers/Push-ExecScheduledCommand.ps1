@@ -8,9 +8,6 @@ function Push-ExecScheduledCommand {
     Write-Information "We are going to be running a scheduled task: $($Item.TaskInfo | ConvertTo-Json -Depth 10)"
 
     $Table = Get-CippTable -tablename 'ScheduledTasks'
-    #$task = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '$($Item.TaskInfo.PartitionKey)' and RowKey eq '$($Item.TaskInfo.RowKey)'"
-    #Write-Host "New taskinfo: $($task | ConvertTo-Json -Depth 10)"
-    #Write-Host "New Type: $($task.gettype())"
     $task = $Item.TaskInfo
     $commandParameters = $Item.Parameters | ConvertTo-Json -Depth 10 | ConvertFrom-Json -AsHashtable
 
@@ -160,7 +157,7 @@ function Push-ExecScheduledCommand {
                 $Webhook = [PSCustomObject]@{
                     'tenantId' = $TenantInfo.customerId
                     'Tenant'   = $Tenant
-                    'TaskInfo' = $task
+                    'TaskInfo' = $Item.TaskInfo
                     'Results'  = $Results
                 }
                 Send-CIPPAlert -Type 'webhook' -Title $title -TenantFilter $Tenant -JSONContent $($Webhook | ConvertTo-Json -Depth 20)
