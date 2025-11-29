@@ -49,11 +49,8 @@ function Invoke-CIPPStandardAutopilotProfile {
         return $true
     } #we're done.
     try {
-        # Replace variables in displayname to prevent duplicates
-        $DisplayName = Get-CIPPTextReplacement -Text $Settings.DisplayName -TenantFilter $Tenant
-
         $CurrentConfig = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/deviceManagement/windowsAutopilotDeploymentProfiles' -tenantid $Tenant |
-            Where-Object { $_.displayName -eq $DisplayName } |
+            Where-Object { $_.displayName -eq $Settings.DisplayName } |
             Select-Object -Property displayName, description, deviceNameTemplate, locale, preprovisioningAllowed, hardwareHashExtractionEnabled, outOfBoxExperienceSetting
 
         $Settings = $Settings | ConvertTo-Json -Depth 100 | ConvertFrom-Json
@@ -66,7 +63,7 @@ function Invoke-CIPPStandardAutopilotProfile {
             $DeploymentMode = 'singleUser'
         }
 
-        $StateIsCorrect = ($CurrentConfig.displayName -eq $DisplayName) -and
+        $StateIsCorrect = ($CurrentConfig.displayName -eq $Settings.DisplayName) -and
         ($CurrentConfig.description -eq $Settings.Description) -and
         ($CurrentConfig.deviceNameTemplate -eq $Settings.DeviceNameTemplate) -and
         ([string]::IsNullOrWhiteSpace($CurrentConfig.locale) -and [string]::IsNullOrWhiteSpace($Settings.Languages.value) -or $CurrentConfig.locale -eq $Settings.Languages.value) -and
@@ -78,15 +75,15 @@ function Invoke-CIPPStandardAutopilotProfile {
         ($CurrentConfig.outOfBoxExperienceSetting.userType -eq $userType) -and
         ($CurrentConfig.outOfBoxExperienceSetting.keyboardSelectionPageSkipped -eq $Settings.AutoKeyboard)
     } catch {
-        $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-        Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to check Autopilot profile: $ErrorMessage" -sev Error
+        $ErrorMessage = Get-CippException -Exception $_
+        Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to check Autopilot profile: $($ErrorMessage.NormalizedError)" -sev Error -LogData $ErrorMessage
         $StateIsCorrect = $false
     }
 
     # Remediate if the state is not correct
     if ($Settings.remediate -eq $true) {
         if ($StateIsCorrect -eq $true) {
-            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Autopilot profile '$($DisplayName)' already exists" -sev Info
+            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Autopilot profile '$($Settings.DisplayName)' already exists" -sev Info
         } else {
             try {
                 Write-Host "WAP: IN: $($settings | ConvertTo-Json -Depth 100)"
@@ -94,7 +91,7 @@ function Invoke-CIPPStandardAutopilotProfile {
 
                 $Parameters = @{
                     tenantFilter       = $Tenant
-                    displayName        = $DisplayName
+                    displayName        = $Settings.DisplayName
                     description        = $Settings.Description
                     userType           = $userType
                     DeploymentMode     = $DeploymentMode
@@ -111,13 +108,13 @@ function Invoke-CIPPStandardAutopilotProfile {
                 write-host "WAP: Parameters $($Parameters | ConvertTo-Json)"
                 Set-CIPPDefaultAPDeploymentProfile @Parameters
                 if ($null -eq $CurrentConfig) {
-                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Created Autopilot profile '$($DisplayName)'" -sev Info
+                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Created Autopilot profile '$($Settings.DisplayName)'" -sev Info
                 } else {
-                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Updated Autopilot profile '$($DisplayName)'" -sev Info
+                    Write-LogMessage -API 'Standards' -tenant $Tenant -message "Updated Autopilot profile '$($Settings.DisplayName)'" -sev Info
                 }
             } catch {
-                $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to create Autopilot profile: $ErrorMessage" -sev 'Error'
+                $ErrorMessage = Get-CippException -Exception $_
+                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Failed to create Autopilot profile: $($ErrorMessage.NormalizedError)" -sev 'Error' -LogData $ErrorMessage
                 throw $ErrorMessage
             }
         }
@@ -133,10 +130,10 @@ function Invoke-CIPPStandardAutopilotProfile {
     # Alert
     if ($Settings.alert -eq $true) {
         if ($StateIsCorrect -eq $true) {
-            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Autopilot profile '$($DisplayName)' exists" -sev Info
+            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Autopilot profile '$($Settings.DisplayName)' exists" -sev Info
         } else {
-            Write-StandardsAlert -message "Autopilot profile '$($DisplayName)' do not match expected configuration" -object $CurrentConfig -tenant $Tenant -standardName 'AutopilotProfile' -standardId $Settings.standardId
-            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Autopilot profile '$($DisplayName)' do not match expected configuration" -sev Info
+            Write-StandardsAlert -message "Autopilot profile '$($Settings.DisplayName)' do not match expected configuration" -object $CurrentConfig -tenant $Tenant -standardName 'AutopilotProfile' -standardId $Settings.standardId
+            Write-LogMessage -API 'Standards' -tenant $Tenant -message "Autopilot profile '$($Settings.DisplayName)' do not match expected configuration" -sev Info
         }
     }
 }

@@ -4,7 +4,7 @@ function Get-CIPPAlertMFAAlertUsers {
         Entrypoint
     #>
     [CmdletBinding()]
-    Param (
+    param (
         [Parameter(Mandatory = $false)]
         [Alias('input')]
         $InputValue,
@@ -12,8 +12,9 @@ function Get-CIPPAlertMFAAlertUsers {
     )
     try {
 
-        $users = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/reports/authenticationMethods/userRegistrationDetails?`$top=999&filter=IsAdmin eq false and isMfaRegistered eq false and userType eq 'member'&`$select=userDisplayName,userPrincipalName,lastUpdatedDateTime,isMfaRegistered,IsAdmin" -tenantid $($TenantFilter) -AsApp $true | Where-Object { $_.userDisplayName -ne 'On-Premises Directory Synchronization Service Account' }
-        if ($users.UserPrincipalName) {
+        $Users = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/reports/authenticationMethods/userRegistrationDetails?`$top=999&filter=IsAdmin eq false and isMfaRegistered eq false and userType eq 'member'&`$select=userDisplayName,userPrincipalName,lastUpdatedDateTime,isMfaRegistered,IsAdmin" -tenantid $($TenantFilter) -AsApp $true |
+            Where-Object { $_.userDisplayName -ne 'On-Premises Directory Synchronization Service Account' -and $_.userPrincipalName -notmatch '^package_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}@' }
+        if ($Users) {
             if ($InputValue){
                 try {
                     $DisabledUsers = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/users?`$top=999&filter=accountEnabled eq false&`$select=id,userPrincipalName,accountEnabled" -tenantid $($TenantFilter)
@@ -23,12 +24,16 @@ function Get-CIPPAlertMFAAlertUsers {
                     Start-Sleep 5
                     $DisabledUsers = New-GraphGETRequest -uri "https://graph.microsoft.com/beta/users?`$top=999&filter=accountEnabled eq false&`$select=id,userPrincipalName,accountEnabled" -tenantid $($TenantFilter)
                 }
-                $Results = $users.UserPrincipalName | Where-Object { $_ -notin $DisabledUsers.UserPrincipalName }
+                $Users = $Users | Where-Object { $_ -notin $DisabledUsers }
             }
-            else {
-                $Results = $users.UserPrincipalName
+
+            $AlertData = foreach ($user in $Users) {
+                [PSCustomObject]@{
+                    UserPrincipalName = $user.userPrincipalName
+                    DisplayName       = $user.userDisplayName
+                    LastUpdated       = $user.lastUpdatedDateTime
+                }
             }
-            $AlertData = "The following $($Results.Count) users do not have MFA registered: $($Results -join ', ')"
             Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $AlertData
 
         }
