@@ -73,6 +73,9 @@ function Set-CIPPAssignedPolicy {
                     }
                 )
             }
+            'On' {
+                # Do not assign to any group - used to turn on policy without assignments
+            }
             default {
                 # Use GroupIds if provided, otherwise resolve by name
                 $resolvedGroupIds = @()

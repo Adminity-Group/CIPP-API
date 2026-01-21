@@ -40,60 +40,18 @@ function Invoke-CIPPStandardMDMScope {
     } #we're done.
 
     try {
-        $MDMSettings = @(
-            [PSCustomObject]@{
-                "id" = "d4ebce55-015a-49b5-a083-c84d1797ae8c"
-                "complianceUrl" = "https://portal.manage.microsoft.com/?portalAction"
-                "discoveryUrl" = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
-                "termsOfUseUrl" = "https://portal.manage.microsoft.com/TermsofUse.aspx"
-            },
-            [PSCustomObject]@{
-                "id" = "0000000a-0000-0000-c000-000000000000"
-                "complianceUrl" = "https://portal.manage.microsoft.com/?portalAction=Compliance"
-                "discoveryUrl" = "https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc"
-                "termsOfUseUrl" = "https://portal.manage.microsoft.com/TermsofUse.aspx"
-            }
-        )
-        $CurrentInfo = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies?$expand=includedGroups' -tenantid $Tenant
-    }
-    catch {
+        $CurrentInfo = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000?$expand=includedGroups' -tenantid $Tenant
+    } catch {
         $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
         Write-LogMessage -API 'Standards' -Tenant $Tenant -Message "Could not get the MDM Scope state for $Tenant. Error: $ErrorMessage" -Sev Error
         return
     }
 
-    $CurrentInfo | Where-Object { $_.id -notin $MDMSettings.id } | ForEach-Object {
-        $currentsp = New-GraphGetRequest -uri "https://graph.microsoft.com/beta/servicePrincipals?`$filter=appId eq '$($_.id)'" -tenantid $Tenant
-        if ($currentsp) {
-            Write-host "MDM Service principal $($_.id) exists, deleting service principal"
-            try {
-                New-GraphDeleteRequest -uri "https://graph.microsoft.com/beta/servicePrincipals/$($currentsp.id)" -tenantid $Tenant
-                Start-Sleep 30
-            }
-            catch {
-                $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-                Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to delete $($MDMSettings.id[0]) MDM service principal" -sev Error -LogData $ErrorMessage
-            }
-        }
-
-        try {
-            Write-host "MDM Service principal $($_.id) missing, creating service principal"
-            $NewSP =  New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/servicePrincipals" -tenantid $Tenant -Body @{"appId" = $_.id}
-            Start-Sleep 5
-        }
-        catch {
-            $ErrorMessage = Get-NormalizedError -Message $_.Exception.Message
-            Write-LogMessage -API 'Standards' -tenant $tenant -message "Failed to create $($MDMSettings.id[0]) MDM service principal" -sev Error -LogData $ErrorMessage
-        }
-    }
-
-    foreach ($MDMPolicy in $CurrentInfo){
-        $MDMSetting = $MDMSettings | Where-Object { $_.id -eq $MDMPolicy.id }
-        $StateIsCorrect =   ($MDMPolicy.termsOfUseUrl -eq $MDMSetting.termsOfUseUrl) -and
-                        ($MDMPolicy.discoveryUrl -eq $MDMSetting.discoveryUrl) -and
-                        ($MDMPolicy.complianceUrl -eq $MDMSetting.complianceUrl) -and
-                        ($MDMPolicy.appliesTo -eq $Settings.appliesTo) -and
-                        ($Settings.appliesTo -ne 'selected' -or ($MDMPolicy.includedGroups.displayName -contains $Settings.customGroup))
+    $StateIsCorrect = ($CurrentInfo.termsOfUseUrl -eq 'https://portal.manage.microsoft.com/TermsofUse.aspx') -and
+    ($CurrentInfo.discoveryUrl -eq 'https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc') -and
+    ($CurrentInfo.complianceUrl -eq 'https://portal.manage.microsoft.com/?portalAction=Compliance') -and
+    ($CurrentInfo.appliesTo -eq $Settings.appliesTo) -and
+    ($Settings.appliesTo -ne 'selected' -or ($CurrentInfo.includedGroups.displayName -contains $Settings.customGroup))
 
         $CompareField = [PSCustomObject]@{
             termsOfUseUrl = $MDMPolicy.termsOfUseUrl
@@ -103,23 +61,23 @@ function Invoke-CIPPStandardMDMScope {
             customGroup   = $MDMPolicy.includedGroups.displayName
         }
 
-        If ($Settings.remediate -eq $true) {
-            if ($StateIsCorrect -eq $true) {
-                Write-LogMessage -API 'Standards' -tenant $tenant -message "MDM Scope $($MDMPolicy.id) already correctly configured" -sev Info
-            } else {
-                $GraphParam = @{
-                    tenantid     = $tenant
-                    Uri          = "https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/$($MDMPolicy.id)"
-                    ContentType  = 'application/json; charset=utf-8'
-                    asApp        = $false
-                    type         = 'PATCH'
-                    AddedHeaders = @{'Accept-Language' = 0 }
-                    Body         = @{
-                        'termsOfUseUrl' = $MDMSetting.termsOfUseUrl
-                        'discoveryUrl' = $MDMSetting.discoveryUrl
-                        'complianceUrl' = $MDMSetting.complianceUrl
-                    } | ConvertTo-Json
-                }
+    if ($Settings.remediate -eq $true) {
+        if ($StateIsCorrect -eq $true) {
+            Write-LogMessage -API 'Standards' -tenant $tenant -message 'MDM Scope already correctly configured' -sev Info
+        } else {
+            $GraphParam = @{
+                tenantid     = $tenant
+                Uri          = 'https://graph.microsoft.com/beta/policies/mobileDeviceManagementPolicies/0000000a-0000-0000-c000-000000000000'
+                ContentType  = 'application/json; charset=utf-8'
+                asApp        = $false
+                type         = 'PATCH'
+                AddedHeaders = @{'Accept-Language' = 0 }
+                Body         = @{
+                    'termsOfUseUrl' = 'https://portal.manage.microsoft.com/TermsofUse.aspx'
+                    'discoveryUrl'  = 'https://enrollment.manage.microsoft.com/enrollmentserver/discovery.svc'
+                    'complianceUrl' = 'https://portal.manage.microsoft.com/?portalAction=Compliance'
+                } | ConvertTo-Json
+            }
 
             try {
                 New-GraphPostRequest @GraphParam
@@ -184,10 +142,23 @@ function Invoke-CIPPStandardMDMScope {
             }
         }
 
-        if ($Settings.report -eq $true) {
-            $FieldValue = $StateIsCorrect ? $true : $CompareField
-            Set-CIPPStandardsCompareField -FieldName 'standards.MDMScope' -FieldValue $FieldValue -TenantFilter $Tenant
-            Add-CIPPBPAField -FieldName 'MDMScope' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
+    if ($Settings.report -eq $true) {
+        $CurrentValue = @{
+            termsOfUseUrl = $CurrentInfo.termsOfUseUrl
+            discoveryUrl  = $CurrentInfo.discoveryUrl
+            complianceUrl = $CurrentInfo.complianceUrl
+            appliesTo     = $CurrentInfo.appliesTo
+            customGroup   = $CurrentInfo.includedGroups.displayName
         }
+        $ExpectedValue = @{
+            termsOfUseUrl = $Settings.termsOfUseUrl
+            discoveryUrl  = $Settings.discoveryUrl
+            complianceUrl = $Settings.complianceUrl
+            appliesTo     = $Settings.appliesTo
+            customGroup   = $Settings.customGroup
+        }
+        Set-CIPPStandardsCompareField -FieldName 'standards.MDMScope' -CurrentValue $CurrentValue -ExpectedValue $ExpectedValue -TenantFilter $Tenant
+        Add-CIPPBPAField -FieldName 'MDMScope' -FieldValue $StateIsCorrect -StoreAs bool -Tenant $tenant
     }
+
 }
