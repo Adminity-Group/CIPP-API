@@ -28,7 +28,7 @@ Function Invoke-EditIntunePolicy {
         }
 
         # Update the policy
-        $Request = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/$ManagementType/$PolicyType/$ID" -tenantid $TenantFilter -type PATCH -body ($properties | ConvertTo-Json) -asapp $true
+        $Request = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/$ManagementType/$PolicyType/$ID" -tenantid $TenantFilter -type PATCH -body ($properties | ConvertTo-Json -Depth 10) -asapp $true
 
         $Result = "Successfully updated Intune policy $($ID)"
         if ($DisplayName) { $Result += " name to '$($DisplayName)'" }
