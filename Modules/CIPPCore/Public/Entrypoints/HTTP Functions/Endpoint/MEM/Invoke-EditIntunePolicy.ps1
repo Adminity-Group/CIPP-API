@@ -18,6 +18,7 @@ Function Invoke-EditIntunePolicy {
     $DisplayName = $Request.Query.newDisplayName ?? $Request.Body.newDisplayName
     $PolicyType = $Request.Query.policyType ?? $Request.Body.policyType
     $properties = $Request.Body.properties ?? @{}
+    $ManagementType = $Request.Body.managementType ?? "deviceManagement"
 
     try {
 
@@ -27,7 +28,7 @@ Function Invoke-EditIntunePolicy {
         }
 
         # Update the policy
-        $Request = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/deviceManagement/$PolicyType/$ID" -tenantid $TenantFilter -type PATCH -body ($properties | ConvertTo-Json) -asapp $true
+        $Request = New-GraphPOSTRequest -uri "https://graph.microsoft.com/beta/$ManagementType/$PolicyType/$ID" -tenantid $TenantFilter -type PATCH -body ($properties | ConvertTo-Json) -asapp $true
 
         $Result = "Successfully updated Intune policy $($ID)"
         if ($DisplayName) { $Result += " name to '$($DisplayName)'" }
