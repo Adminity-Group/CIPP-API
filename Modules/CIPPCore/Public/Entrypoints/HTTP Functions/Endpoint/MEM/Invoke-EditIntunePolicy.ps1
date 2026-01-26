@@ -17,9 +17,9 @@ Function Invoke-EditIntunePolicy {
     $ID = $Request.Query.ID ?? $Request.Body.ID
     $DisplayName = $Request.Query.newDisplayName ?? $Request.Body.newDisplayName
     $PolicyType = $Request.Query.policyType ?? $Request.Body.policyType
+    $properties = $Request.Body.properties ?? @{}
 
     try {
-        $properties = @{}
 
         # Only add displayName if it's provided
         if ($DisplayName) {
