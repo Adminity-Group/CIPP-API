@@ -92,14 +92,13 @@ function Get-CIPPTextReplacement {
     # Replace EntraID group display name with SID
     while ($Text -match '%CIPPGroup\{(.*?)\}%') {
         $GroupName = $Matches[1] # Extract the value inside the curly braces
-        Write-Host "Replace: Extracted Group Name: $GroupName"
 
         # Fetch the group details from Microsoft Graph
         $EntraIdGroup = New-GraphGetRequest -uri 'https://graph.microsoft.com/beta/groups?$select=id,displayName,securityIdentifier&$top=999' -tenantid $CustomerId | Where-Object -Property displayName -EQ $GroupName
 
         if ($EntraIdGroup) {
             # Replace the current match with the group's securityIdentifier
-            $Text = $Text -replace '%CIPPGroup\{' + [regex]::Escape($GroupName) + '\}%', $EntraIdGroup.securityIdentifier
+            $Text = $Text -replace ('%CIPPGroup\{' + [regex]::Escape($GroupName) + '\}%'), $EntraIdGroup.securityIdentifier
         } else {
             Write-LogMessage -API 'Onboarding' -message "Group '$GroupName' not found in EntraID." -Sev 'Error'
             Break
@@ -134,3 +133,10 @@ function Get-CIPPTextReplacement {
     }
     return $Text
 }
+
+$d = @"
+{  "Displayname": "Ag.L1.P1: Win_ES_AccountProtection_D_Replace Local Admins",  "Description": "Replace all members of local admin group with local user 'SupermuleLocal' and EntraID Group 'Ag.L1: Intune_Users_Local Device Administrators'",  "RAWJson": "{\"name\":\"Ag.L1.P1: Win_ES_AccountProtection_D_Replace Local Admins\",\"description\":\"Replace all members of local admin group with local user 'SupermuleLocal' and EntraID Group 'Ag.L1: Intune_Users_Local Device Administrators'\",\"settings\":[{\"id\":\"0\",\"settingInstance\":{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance\",\"settingDefinitionId\":\"device_vendor_msft_policy_config_localusersandgroups_configure\",\"settingInstanceTemplateReference\":{\"settingInstanceTemplateId\":\"de06bec1-4852-48a0-9799-cf7b85992d45\"},\"groupSettingCollectionValue\":[{\"settingValueTemplateReference\":null,\"children\":[{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationGroupSettingCollectionInstance\",\"settingDefinitionId\":\"device_vendor_msft_policy_config_localusersandgroups_configure_groupconfiguration_accessgroup\",\"settingInstanceTemplateReference\":null,\"groupSettingCollectionValue\":[{\"settingValueTemplateReference\":null,\"children\":[{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationChoiceSettingCollectionInstance\",\"settingDefinitionId\":\"device_vendor_msft_policy_config_localusersandgroups_configure_groupconfiguration_accessgroup_desc\",\"settingInstanceTemplateReference\":null,\"choiceSettingCollectionValue\":[{\"settingValueTemplateReference\":null,\"value\":\"device_vendor_msft_policy_config_localusersandgroups_configure_groupconfiguration_accessgroup_desc_administrators\",\"children\":[]}]},{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance\",\"settingDefinitionId\":\"device_vendor_msft_policy_config_localusersandgroups_configure_groupconfiguration_accessgroup_action\",\"settingInstanceTemplateReference\":null,\"choiceSettingValue\":{\"settingValueTemplateReference\":null,\"value\":\"device_vendor_msft_policy_config_localusersandgroups_configure_groupconfiguration_accessgroup_action_add_restrict\",\"children\":[]}},{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance\",\"settingDefinitionId\":\"device_vendor_msft_policy_config_localusersandgroups_configure_groupconfiguration_accessgroup_userselectiontype\",\"settingInstanceTemplateReference\":null,\"choiceSettingValue\":{\"settingValueTemplateReference\":null,\"value\":\"device_vendor_msft_policy_config_localusersandgroups_configure_groupconfiguration_accessgroup_userselectiontype_manual\",\"children\":[{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationSimpleSettingCollectionInstance\",\"settingDefinitionId\":\"device_vendor_msft_policy_config_localusersandgroups_configure_groupconfiguration_accessgroup_users\",\"settingInstanceTemplateReference\":null,\"simpleSettingCollectionValue\":[{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationStringSettingValue\",\"settingValueTemplateReference\":null,\"value\":\"SupermuleLocal\"},{\"@odata.type\":\"#microsoft.graph.deviceManagementConfigurationStringSettingValue\",\"settingValueTemplateReference\":null,\"value\":\"%CIPPGroup{Ag.L1: Intune_Users_Local Device Administrators}%\"}]}]}}]}]}]}]}}],\"platforms\":\"windows10\",\"technologies\":\"mdm\",\"templateReference\":{\"templateId\":\"22968f54-45fa-486c-848e-f8224aa69772_1\",\"templateFamily\":\"endpointSecurityAccountProtection\",\"templateDisplayName\":\"Local user group membership\",\"templateDisplayVersion\":\"Version 1\"}}",  "Type": "Catalog",  "GUID": "032e06e2-3237-46ea-a1de-48b3ba18c8dd"
+  }
+"@ | ConvertFrom-Json -Depth 100
+
+$text = $d.RAWJson
