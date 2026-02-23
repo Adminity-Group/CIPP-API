@@ -31,7 +31,7 @@ function Start-CIPPProcessorQueue {
                         TriggerType  = 'ProcessorQueue'
                         QueueRowKey  = $QueueItem.RowKey
                     }
-                    
+
                     # Add parameters info if available
                     if ($Parameters.Count -gt 0) {
                         $metadata['ParameterCount'] = $Parameters.Count
@@ -43,11 +43,11 @@ function Start-CIPPProcessorQueue {
                             $metadata['Tenant'] = $Parameters.TenantFilter
                         }
                     }
-                    
+
                     # Wrap function execution with telemetry
-                    Measure-CippTask -TaskName $FunctionName -Metadata $metadata -Script {
-                        Invoke-Command -ScriptBlock { & $FunctionName @Parameters }
-                    }
+
+                    Invoke-Command -ScriptBlock { & $FunctionName @Parameters }
+
                 } catch {
                     Write-Warning "Failed to run function $($FunctionName). Error: $($_.Exception.Message)"
                 }

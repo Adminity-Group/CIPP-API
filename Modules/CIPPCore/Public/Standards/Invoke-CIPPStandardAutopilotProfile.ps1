@@ -54,7 +54,7 @@ function Invoke-CIPPStandardAutopilotProfile {
 
         $Settings = $Settings | ConvertTo-Json -Depth 100 | ConvertFrom-Json
 
-        if ($Settings.NotLocalAdmin -eq $true) { $userType = 'Standard' } else { $userType = 'Administrator' }
+        if ($Settings.NotLocalAdmin -eq $true) { $userType = 'standard' } else { $userType = 'administrator' }
         if ($Settings.SelfDeployingMode -eq $true) {
             $DeploymentMode = 'shared'
             $Settings.AllowWhiteGlove = $false
