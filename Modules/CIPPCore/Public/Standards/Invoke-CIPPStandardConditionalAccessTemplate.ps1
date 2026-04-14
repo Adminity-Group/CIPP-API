@@ -99,6 +99,13 @@ function Invoke-CIPPStandardConditionalAccessTemplate {
         $Filter = "PartitionKey eq 'CATemplate' and RowKey eq '$($Settings.TemplateList.value)'"
         $Policy = (Get-CippAzDataTableEntity @Table -Filter $Filter).JSON | ConvertFrom-Json -Depth 10
 
+        # Override the template's state with the Drift Standard's state if specified
+        # This ensures drift detection compares against the desired state, not the original template state
+        if ($Settings.state -and $Settings.state -ne 'donotchange') {
+            Write-Information "Overriding template state from '$($Policy.state)' to '$($Settings.state)' for drift comparison"
+            $Policy.state = $Settings.state
+        }
+
         $CheckExististing = $AllCAPolicies | Where-Object -Property displayName -EQ $Settings.TemplateList.label
         if (!$CheckExististing) {
             if ($Policy.conditions.userRiskLevels.Count -gt 0 -or $Policy.conditions.signInRiskLevels.Count -gt 0) {
@@ -114,6 +121,12 @@ function Invoke-CIPPStandardConditionalAccessTemplate {
         } else {
             $templateResult = New-CIPPCATemplate -TenantFilter $tenant -JSON $CheckExististing -preloadedLocations $preloadedLocations
             $CompareObj = ConvertFrom-Json -ErrorAction SilentlyContinue -InputObject $templateResult
+            if ($null -eq $Policy -or $null -eq $CompareObj) {
+                $nullSide = if ($null -eq $Policy) { 'template policy' } else { 'tenant policy conversion' }
+                Write-LogMessage -API 'Standards' -tenant $Tenant -message "Cannot compare CA policy: $nullSide returned null for $($Settings.TemplateList.label)" -sev Error
+                Set-CIPPStandardsCompareField -FieldName "standards.ConditionalAccessTemplate.$($Settings.TemplateList.value)" -FieldValue "Error comparing policy: $nullSide returned null" -Tenant $Tenant
+                return
+            }
             try {
                 $Compare = Compare-CIPPIntuneObject -ReferenceObject $Policy -DifferenceObject $CompareObj -CompareType 'ca'
             } catch {

@@ -19,7 +19,7 @@ function Get-CIPPAlertGroupMembershipChange {
         $AuditLogs = New-GraphGetRequest -uri "https://graph.microsoft.com/v1.0/auditLogs/directoryAudits?`$filter=activityDateTime ge $OneHourAgo and (activityDisplayName eq 'Add member to group' or activityDisplayName eq 'Remove member from group')" -tenantid $TenantFilter
 
         $AlertData = foreach ($Log in $AuditLogs) {
-            $Member = ($Log.targetResources | Where-Object { $_.type -in @('User', 'ServicePrincipal') })[0]
+            $Member = ($Log.targetResources | Where-Object { $_.type -in @('User', 'ServicePrincipal', 'Group') })[0]
             $GroupProp = ($Member.modifiedProperties | Where-Object { $_.displayName -eq 'Group.DisplayName' })
             $GroupDisplayName = (($GroupProp.newValue ?? $GroupProp.oldValue) -replace '"', '')
             if (!$GroupDisplayName -or !($MonitoredGroups | Where-Object { $GroupDisplayName -like $_ })) { continue }
@@ -42,6 +42,7 @@ function Get-CIPPAlertGroupMembershipChange {
             Write-AlertTrace -cmdletName $MyInvocation.MyCommand -tenantFilter $TenantFilter -data $AlertData
         }
     } catch {
-        Write-LogMessage -API 'Alerts' -tenant $TenantFilter -message "Could not check group membership changes for $($TenantFilter): $(Get-NormalizedError -message $_.Exception.message)" -sev Error
+        $ErrorMessage = Get-CippException -Exception $_
+        Write-LogMessage -API 'Alerts' -tenant $TenantFilter -message "Could not check group membership changes for $($TenantFilter): $($ErrorMessage.NormalizedError)" -sev Error -LogData $ErrorMessage
     }
 }
