@@ -58,9 +58,6 @@ function Start-UserTasksOrchestrator {
                     Write-Information "Task $($task.Name) already being processed by another orchestrator instance. Skipping."
                     continue
                 }
-                #PSH
-                $task = Get-CIPPAzDataTableEntity @Table -Filter "PartitionKey eq '$($task.PartitionKey)' and RowKey eq '$($task.RowKey)'"
-
                 $task.Parameters = $task.Parameters | ConvertFrom-Json -AsHashtable
                 if (!$task.Parameters) { $task.Parameters = @{} }
 
