@@ -84,10 +84,10 @@ function Compare-CIPPIntuneObject {
 
         function Compare-ObjectsRecursively {
             param (
-                [Parameter(Mandatory = $false)]
+                [Parameter(Mandatory = $true)]
                 $Object1,
 
-                [Parameter(Mandatory = $false)]
+                [Parameter(Mandatory = $true)]
                 $Object2,
 
                 [Parameter(Mandatory = $false)]
@@ -384,7 +384,7 @@ function Compare-CIPPIntuneObject {
 
             foreach ($child in $Children) {
                 $childIntuneObj = $IntuneCollectionIndex[$child.settingDefinitionId]
-                $childLabel = if (${childIntuneObj}?.displayName) {
+                $childLabel = if ($childIntuneObj?.displayName) {
                     $childIntuneObj.displayName
                 } else {
                     $child.settingDefinitionId
@@ -403,27 +403,14 @@ function Compare-CIPPIntuneObject {
                     }
                     '#microsoft.graph.deviceManagementConfigurationChoiceSettingInstance' {
                         $childValue = $null
-                        if ($child.{choiceSettingValue}?.value) {
+                        if ($child.choiceSettingValue?.value) {
                             $option = $childIntuneObj.options | Where-Object {
                                 $_.id -eq $child.choiceSettingValue.value
                             }
-                            $childValue = if (${option}?.displayName) {
+                            $childValue = if ($option?.displayName) {
                                 $option.displayName
                             } else {
                                 $child.choiceSettingValue.value
-                            }
-                        }
-                        else {
-                            $ValueKey = ($child.'@odata.type' -replace '#microsoft.graph.deviceManagementConfiguration', '') -replace 'Instance', 'Value'
-                            if ($child.${ValueKey}?.value) {
-                                $option = $childIntuneObj.options | Where-Object {
-                                    $_.id -eq $child.$ValueKey.value
-                                }
-                                $childValue = if (${option}?.displayName) {
-                                    $option.displayName
-                                } else {
-                                    $child.$ValueKey.value
-                                }
                             }
                         }
 
