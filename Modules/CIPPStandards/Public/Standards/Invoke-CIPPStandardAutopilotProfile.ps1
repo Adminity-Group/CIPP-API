@@ -58,8 +58,6 @@ function Invoke-CIPPStandardAutopilotProfile {
             Where-Object { $_.displayName -eq $Settings.DisplayName } |
             Select-Object -Property displayName, description, deviceNameTemplate, locale, preprovisioningAllowed, hardwareHashExtractionEnabled, outOfBoxExperienceSetting
 
-        $Settings = $Settings | ConvertTo-Json -Depth 100 | ConvertFrom-Json
-
         if ($Settings.NotLocalAdmin -eq $true) { $userType = 'standard' } else { $userType = 'administrator' }
         if ($Settings.SelfDeployingMode -eq $true) {
             $DeploymentMode = 'shared'
@@ -136,9 +134,10 @@ function Invoke-CIPPStandardAutopilotProfile {
                     HideChangeAccount  = $true
                     HidePrivacy        = $Settings.HidePrivacy
                     HideTerms          = $Settings.HideTerms
-                    AutoKeyboard       = [bool]$Settings.AutoKeyboard
-                    Language           = [string]$Settings.Languages.value
+                    AutoKeyboard       = $Settings.AutoKeyboard
+                    Language           = $Settings.Languages.value
                 }
+
                 Set-CIPPDefaultAPDeploymentProfile @Parameters
                 if ($null -eq $CurrentConfig) {
                     Write-LogMessage -API 'Standards' -tenant $Tenant -message "Created Autopilot profile '$($Settings.DisplayName)'" -sev Info
