@@ -123,9 +123,6 @@ function Invoke-CIPPStandardAutopilotProfile {
             Write-LogMessage -API 'Standards' -tenant $Tenant -message "Autopilot profile '$($Settings.DisplayName)' already exists" -sev Info
         } else {
             try {
-                Write-Host "WAP: IN: $($settings | ConvertTo-Json -Depth 100)"
-                write-host "WAP: In type $($settings.gettype())"
-
                 $Parameters = @{
                     TenantFilter       = $Tenant
                     DisplayName        = $Settings.DisplayName
@@ -142,7 +139,6 @@ function Invoke-CIPPStandardAutopilotProfile {
                     AutoKeyboard       = [bool]$Settings.AutoKeyboard
                     Language           = [string]$Settings.Languages.value
                 }
-                write-host "WAP: Parameters $($Parameters | ConvertTo-Json)"
                 Set-CIPPDefaultAPDeploymentProfile @Parameters
                 if ($null -eq $CurrentConfig) {
                     Write-LogMessage -API 'Standards' -tenant $Tenant -message "Created Autopilot profile '$($Settings.DisplayName)'" -sev Info
