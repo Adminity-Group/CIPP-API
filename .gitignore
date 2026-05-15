@@ -24,6 +24,3 @@ Shared/CIPPSharp/obj/
 !/profile.ps1
 .DS_Store
 proxyman.pem
-
-Shared/CIPPSharp/obj/Debug/
-docs/drift-remediation-task-flow.md
