@@ -11,7 +11,7 @@ function Get-ApplicationInsightsQuery {
 
     $SubscriptionId = Get-CIPPAzFunctionAppSubId
     if ($env:WEBSITE_SKU -ne 'FlexConsumption' -and $Owner -match '^(?<SubscriptionId>[^+]+)\+(?<RGName>[^-]+(?:-[^-]+)*?)(?:-[^-]+webspace(?:-Linux)?)?$') {
-        $RGName = $Matches.RGName
+       $RGName = $env:WEBSITE_RESOURCE_GROUP
     } else {
         $RGName = $env:WEBSITE_RESOURCE_GROUP
     }
