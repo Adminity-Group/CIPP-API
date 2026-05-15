@@ -32,6 +32,8 @@ function Get-ApplicationInsightsQuery {
     $headerParams = @{'Authorization' = "Bearer $Token" }
     $logAnalyticsBaseURI = 'https://api.loganalytics.io/v1'
 
+    Write-host "ADMINITY: $($logAnalyticsBaseURI)/$AppInsightsQuery"
+
     $result = Invoke-CIPPRestMethod -Method POST -Uri "$($logAnalyticsBaseURI)/$AppInsightsQuery" -Headers $headerParams -Body $Body -ContentType 'application/json' -ErrorAction Stop
 
     # Format Result to PSObject
