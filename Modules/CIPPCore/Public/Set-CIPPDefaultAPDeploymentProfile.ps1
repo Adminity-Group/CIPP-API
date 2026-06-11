@@ -20,25 +20,13 @@ function Set-CIPPDefaultAPDeploymentProfile {
     )
 
     try {
-        If ($DeviceNameTemplate -like "*#SHORTNAME#*") {
-            $TableProperties = Get-CippTable -tablename 'TenantProperties'
-            $TableTenants = Get-CippTable -tablename 'Tenants'
-
-            $Tenant = Get-CIPPAzDataTableEntity @TableTenants -Filter "PartitionKey eq 'Tenants' and defaultDomainName eq '$($tenantfilter)'" -Property RowKey, PartitionKey, customerId, displayName, defaultDomainName
-
-
-            $Shortname = (Get-CIPPAzDataTableEntity @TableProperties -Filter "PartitionKey eq '$($tenant.customerId)' and RowKey eq 'Shortname'").Value
-
-            if (!$Shortname) {
-                Write-LogMessage -Headers $User -API $APIName -tenant $($tenantfilter) -message "Failed adding Autopilot Profile $($Displayname). Error: Tenant ShortName is not set for $($Tenant.defaultDomainName)" -Sev 'Error'
-                throw "Tenant ShortName is not set for $($tenantFilter)"
-                return
-            }
-            Write-Host "WAP: shortname $($Shortname)"
-            $DeviceNameTemplate = $DeviceNameTemplate -replace "#SHORTNAME#", $Shortname
+        # Map language selection to Graph API locale values:
+        # 'user-select' -> empty string (lets user choose during OOBE)
+        # 'os-default' or $null -> $null (uses operating system default)
+        # Specific tag (e.g. 'en-US') -> passed through as-is
+        if ($Language -eq 'os-default') {
+            $Language = $null
         }
-
-        if ($Language -in @('user-select', 'os-default')) { $Language = "$null" }
 
         # userType in outOfBoxExperienceSetting is only valid for user-driven (singleUser) mode.
         # The Intune API rejects it for self-deploying (shared) mode.
@@ -52,6 +40,7 @@ function Set-CIPPDefaultAPDeploymentProfile {
         if ($DeploymentMode -ne 'shared') {
             $OutOfBoxSetting['userType'] = "$UserType"
         }
+
         $ObjBody = [pscustomobject]@{
             '@odata.type'                   = '#microsoft.graph.azureADWindowsAutopilotDeploymentProfile'
             'displayName'                   = "$($DisplayName)"
@@ -64,8 +53,12 @@ function Set-CIPPDefaultAPDeploymentProfile {
             'roleScopeTagIds'               = @()
             'outOfBoxExperienceSetting'     = $OutOfBoxSetting
         }
+        if ($Language -eq 'user-select') {
+            #Add language query to body only if user-select, as Graph API treats empty string differently than null
+            $ObjBody.locale = ''
+            $ObjBody | Add-Member -MemberType NoteProperty -Name 'language' -Value '' -Force
+        }
         $Body = ConvertTo-Json -InputObject $ObjBody -Depth 10
-
         Write-Information $Body
 
         $Profiles = New-GraphGETRequest -uri 'https://graph.microsoft.com/beta/deviceManagement/windowsAutopilotDeploymentProfiles' -tenantid $TenantFilter | Where-Object -Property displayName -EQ $DisplayName
