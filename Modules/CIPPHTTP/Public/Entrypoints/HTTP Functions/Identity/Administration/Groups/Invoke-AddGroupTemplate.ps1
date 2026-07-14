@@ -53,6 +53,8 @@ function Invoke-AddGroupTemplate {
             allowExternal   = $Request.Body.allowExternal
             username        = $Request.Body.username  # Can contain variables like @%tenantfilter%
             licenses        = $Request.Body.licenses
+            aliases         = $Request.Body.aliases # One per line, variables allowed
+            hideFromGAL     = $Request.Body.hideFromGAL
             visibility      = $Request.Body.visibility
             mailEnabled     = $Request.Body.mailEnabled
             securityEnabled = $Request.Body.securityEnabled
